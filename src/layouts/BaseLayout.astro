@@ -8,21 +8,21 @@ interface Props {
 const { title, description = "Comprehensive guide to Artificial Intelligence and Machine Learning", currentPage = "" } = Astro.props;
 
 const chapters = [
-  { title: "Foundations of AI", path: `${import.meta.env.BASE_URL}chapters/01-foundations` },
-  { title: "Machine Learning", path: `${import.meta.env.BASE_URL}chapters/02-machine-learning` },
-  { title: "Deep Learning", path: `${import.meta.env.BASE_URL}chapters/03-deep-learning` },
-  { title: "Transformers", path: `${import.meta.env.BASE_URL}chapters/04-transformers` },
-  { title: "Large Language Models", path: `${import.meta.env.BASE_URL}chapters/05-llms` },
-  { title: "Generative AI", path: `${import.meta.env.BASE_URL}chapters/06-generative-ai` },
-  { title: "Embeddings & Vector DBs", path: `${import.meta.env.BASE_URL}chapters/07-embeddings` },
-  { title: "RAG Systems", path: `${import.meta.env.BASE_URL}chapters/08-rag` },
-  { title: "Fine-Tuning", path: `${import.meta.env.BASE_URL}chapters/09-fine-tuning` },
-  { title: "Multimodal AI", path: `${import.meta.env.BASE_URL}chapters/10-multimodal` },
-  { title: "AI Agents & MCP", path: `${import.meta.env.BASE_URL}chapters/11-agents` },
-  { title: "AI Tooling", path: `${import.meta.env.BASE_URL}chapters/12-tooling` },
-  { title: "AI Infrastructure", path: `${import.meta.env.BASE_URL}chapters/13-infrastructure` },
-  { title: "System Design", path: `${import.meta.env.BASE_URL}chapters/14-system-design` },
-  { title: "Glossary", path: `${import.meta.env.BASE_URL}chapters/15-glossary` }
+  { title: "Foundations of AI", path: `${import.meta.env.BASE_URL}/chapters/01-foundations` },
+  { title: "Machine Learning", path: `${import.meta.env.BASE_URL}/chapters/02-machine-learning` },
+  { title: "Deep Learning", path: `${import.meta.env.BASE_URL}/chapters/03-deep-learning` },
+  { title: "Transformers", path: `${import.meta.env.BASE_URL}/chapters/04-transformers` },
+  { title: "Large Language Models", path: `${import.meta.env.BASE_URL}/chapters/05-llms` },
+  { title: "Generative AI", path: `${import.meta.env.BASE_URL}/chapters/06-generative-ai` },
+  { title: "Embeddings & Vector DBs", path: `${import.meta.env.BASE_URL}/chapters/07-embeddings` },
+  { title: "RAG Systems", path: `${import.meta.env.BASE_URL}/chapters/08-rag` },
+  { title: "Fine-Tuning", path: `${import.meta.env.BASE_URL}/chapters/09-fine-tuning` },
+  { title: "Multimodal AI", path: `${import.meta.env.BASE_URL}/chapters/10-multimodal` },
+  { title: "AI Agents & MCP", path: `${import.meta.env.BASE_URL}/chapters/11-agents` },
+  { title: "AI Tooling", path: `${import.meta.env.BASE_URL}/chapters/12-tooling` },
+  { title: "AI Infrastructure", path: `${import.meta.env.BASE_URL}/chapters/13-infrastructure` },
+  { title: "System Design", path: `${import.meta.env.BASE_URL}/chapters/14-system-design` },
+  { title: "Glossary", path: `${import.meta.env.BASE_URL}/chapters/15-glossary` }
 ];
 ---
 
@@ -75,8 +75,8 @@ const chapters = [
     });
   </script>
   
-  <link rel="stylesheet" href={`${import.meta.env.BASE_URL}styles/global.css`}>
-  <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`}>
+  <link rel="stylesheet" href={`${import.meta.env.BASE_URL}/styles/global.css`}>
+  <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}/favicon.svg`}>
 </head>
 <body>
   <div class="app-container">
@@ -102,7 +102,7 @@ const chapters = [
         
         <nav class="main-nav">
           <a href={import.meta.env.BASE_URL} class={currentPage === "" ? "active" : ""}>Home</a>
-          <a href={`${import.meta.env.BASE_URL}chapters/01-foundations`} class={currentPage.startsWith("/chapters") ? "active" : ""}>Chapters</a>
+          <a href={`${import.meta.env.BASE_URL}/chapters/01-foundations`} class={currentPage.startsWith("/chapters") ? "active" : ""}>Chapters</a>
           <a href="https://github.com/nchand02/AIConceptsHub" target="_blank" rel="noopener">GitHub</a>
         </nav>
         
@@ -195,7 +195,7 @@ const chapters = [
   </div>
 
   <!-- Scripts -->
-  <script src={`${import.meta.env.BASE_URL}scripts/main.js`}></script>
+  <script src={`${import.meta.env.BASE_URL}/scripts/main.js`}></script>
   <script is:inline>
     // Initialize theme
     const theme = localStorage.getItem('theme') || 'light';
