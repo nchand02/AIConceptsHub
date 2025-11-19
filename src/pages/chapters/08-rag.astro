@@ -1,0 +1,643 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Chapter 8: RAG Systems"
+  description="Comprehensive guide to Retrieval-Augmented Generation: Architecture, Implementation, and Best Practices"
+  currentPage="/chapters/08-rag"
+>
+  <article>
+    <h1>Chapter 8: Retrieval-Augmented Generation (RAG)</h1>
+
+    <div class="callout info">
+      <div class="callout-title">📚 Chapter Overview</div>
+      <p>RAG combines the power of retrieval systems with generative LLMs to provide accurate, grounded, and up-to-date responses. This chapter covers RAG architecture, implementation patterns, optimization techniques, and production best practices.</p>
+    </div>
+
+    <h2>What is RAG?</h2>
+
+    <p>Retrieval-Augmented Generation enhances LLMs by retrieving relevant information before generating responses:</p>
+
+    <pre><code>Without RAG:
+User: "What was our Q4 revenue?"
+LLM: "I don't have access to that information" ❌
+
+With RAG:
+User: "What was our Q4 revenue?"
+1. Retrieve relevant documents from company knowledge base
+2. Include retrieved context in prompt
+3. LLM: "Based on the Q4 financial report, revenue was $2.5M" ✅
+
+Key Benefits:
+• Grounds responses in factual data
+• Provides citations/sources
+• Updates knowledge without retraining
+• Reduces hallucinations
+• Domain-specific accuracy</code></pre>
+
+    <h3>Why RAG Matters</h3>
+
+    <ul>
+      <li><strong>Knowledge Freshness:</strong> Access up-to-date information without retraining</li>
+      <li><strong>Domain Expertise:</strong> Leverage proprietary/internal knowledge bases</li>
+      <li><strong>Attribution:</strong> Cite sources for transparency and trust</li>
+      <li><strong>Cost-Effective:</strong> Cheaper than fine-tuning for most use cases</li>
+      <li><strong>Reduced Hallucinations:</strong> Ground responses in retrieved facts</li>
+    </ul>
+
+    <h2>RAG Architecture</h2>
+
+    <pre><code>┌────────────────────────────────────────────────┐
+│            RAG Pipeline                        │
+├────────────────────────────────────────────────┤
+│                                                │
+│  1. INDEXING (Offline)                         │
+│     ┌──────────────┐                          │
+│     │ Documents    │                          │
+│     └──────┬───────┘                          │
+│            ↓                                   │
+│     [Chunk & Process]                         │
+│            ↓                                   │
+│     [Generate Embeddings]                     │
+│            ↓                                   │
+│     [Store in Vector DB]                      │
+│                                                │
+│  2. RETRIEVAL (Online)                         │
+│     ┌──────────────┐                          │
+│     │ User Query   │                          │
+│     └──────┬───────┘                          │
+│            ↓                                   │
+│     [Embed Query]                             │
+│            ↓                                   │
+│     [Vector Similarity Search]                │
+│            ↓                                   │
+│     [Return Top K Documents]                  │
+│                                                │
+│  3. GENERATION (Online)                        │
+│     ┌──────────────┐  ┌─────────────┐        │
+│     │ Query        │  │ Retrieved   │        │
+│     │              │  │ Documents   │        │
+│     └──────┬───────┘  └──────┬──────┘        │
+│            └────────┬─────────┘               │
+│                     ↓                         │
+│            [Construct Prompt]                 │
+│                     ↓                         │
+│               [LLM Generation]                │
+│                     ↓                         │
+│              [Final Answer]                   │
+│                                                │
+└────────────────────────────────────────────────┘</code></pre>
+
+    <h2>Naive RAG Implementation</h2>
+
+    <h3>Basic RAG Pipeline</h3>
+
+    <pre><code class="language-python"># Simple RAG with LangChain
+from langchain.document_loaders import TextLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import RetrievalQA
+
+# 1. Load documents
+loader = TextLoader("company_docs.txt")
+documents = loader.load()
+
+# 2. Split into chunks
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+)
+chunks = text_splitter.split_documents(documents)
+
+# 3. Create embeddings and vector store
+embeddings = OpenAIEmbeddings()
+vectorstore = Chroma.from_documents(chunks, embeddings)
+
+# 4. Create retriever
+retriever = vectorstore.as_retriever(
+    search_type="similarity",
+    search_kwargs=dict(k=4)  # Return top 4 chunks
+)
+
+# 5. Create RAG chain
+llm = ChatOpenAI(model="gpt-4", temperature=0)
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    chain_type="stuff",  # Stuff all docs into context
+    retriever=retriever,
+    return_source_documents=True
+)
+
+# 6. Query
+query = "What is our refund policy?"
+result = qa_chain(query)
+print(result.get("result"))
+print("Sources:", result.get("source_documents"))</code></pre>
+
+    <h3>Prompt Template</h3>
+
+    <pre><code>Basic RAG Prompt:
+
+You are a helpful assistant. Use the following pieces of context
+to answer the question. If you don't know the answer, say you don't know.
+
+Context:
+(retrieved_documents)
+
+Question: (user_question)
+
+Answer:</code></pre>
+
+    <h2>Advanced RAG Techniques</h2>
+
+    <h3>1. Query Transformation</h3>
+
+    <p>Improve retrieval by rewriting or expanding the query:</p>
+
+    <pre><code>Original Query: "How to reset password?"
+
+Techniques:
+
+A. Query Expansion (Multi-Query):
+   Generated queries:
+   - "password reset instructions"
+   - "steps to change password"
+   - "forgot password procedure"
+
+   Retrieve for each, merge results
+
+B. HyDE (Hypothetical Document Embeddings):
+   Generate hypothetical answer first:
+   "To reset your password, go to settings..."
+
+   Use this answer for retrieval (works surprisingly well!)
+
+C. Step-Back Prompting:
+   Original: "What is the melting point of gold?"
+   Step-back: "What are the properties of gold?"
+
+   Retrieve for both, combine context</code></pre>
+
+    <h3>2. Reranking</h3>
+
+    <p>Re-score retrieved documents for better relevance:</p>
+
+    <pre><code class="language-python"># Reranking with Cross-Encoder
+from sentence_transformers import CrossEncoder
+
+# 1. Initial retrieval (fast, approximate)
+initial_docs = vectorstore.similarity_search(query, k=20)
+
+# 2. Rerank with cross-encoder (slower, more accurate)
+reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+
+# Score query-document pairs
+pairs = [[query, doc.page_content] for doc in initial_docs]
+scores = reranker.predict(pairs)
+
+# Sort by score
+ranked_docs = [doc for _, doc in sorted(
+    zip(scores, initial_docs),
+    reverse=True
+)]
+
+# Take top K after reranking
+final_docs = ranked_docs[:4]</code></pre>
+
+    <h3>Reranking Models (2024)</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Provider</th>
+          <th>Type</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Cohere Rerank API</strong></td>
+          <td>Cohere</td>
+          <td>API</td>
+          <td>Production, multilingual</td>
+        </tr>
+        <tr>
+          <td><strong>cross-encoder/ms-marco</strong></td>
+          <td>HuggingFace</td>
+          <td>Self-hosted</td>
+          <td>English, open source</td>
+        </tr>
+        <tr>
+          <td><strong>bge-reranker-large</strong></td>
+          <td>BAAI</td>
+          <td>Self-hosted</td>
+          <td>High quality, Chinese + English</td>
+        </tr>
+        <tr>
+          <td><strong>LLM-as-Reranker</strong></td>
+          <td>Any LLM</td>
+          <td>Prompt-based</td>
+          <td>Flexible, expensive</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3. Metadata Filtering</h3>
+
+    <p>Combine semantic search with structured filters:</p>
+
+    <pre><code class="language-python"># Filter by metadata before retrieval
+retriever = vectorstore.as_retriever(
+    search_type="similarity",
+    search_kwargs=dict(
+        k=4,
+        filter=dict(
+            department="engineering",
+            date=dict(gte="2024-01-01"),
+            doc_type=dict(contains=["policy", "guide"])
+        )
+    )
+)
+
+# Or build dynamic filters based on query
+def extract_filters(query):
+    # Use LLM to extract structured filters from natural language
+    prompt = """
+    Extract filters from this query:
+    Query: """ + query + """
+
+    Return as JSON with fields: department, date_range, doc_type
+    """
+    # ... LLM call ...</code></pre>
+
+    <h3>4. Hierarchical Retrieval</h3>
+
+    <p>Retrieve at multiple granularities:</p>
+
+    <pre><code>Strategy:
+1. Embed small chunks (500 tokens) for precise matching
+2. Store parent chunks or full documents
+3. Retrieve small chunks
+4. Return parent chunks for context
+
+Benefits:
+• Precise matching (small chunks)
+• Rich context (parent documents)
+• Better coherence
+
+Implementation:
+- LangChain: ParentDocumentRetriever
+- LlamaIndex: Hierarchical Nodes</code></pre>
+
+    <h3>5. Fusion Retrieval (Hybrid)</h3>
+
+    <p>Combine multiple retrieval methods:</p>
+
+    <pre><code>Methods to Fuse:
+1. Vector Search (semantic)
+2. Keyword Search / BM25 (lexical)
+3. Knowledge Graph Traversal
+4. SQL Queries (structured data)
+
+Fusion Algorithms:
+
+A. Reciprocal Rank Fusion (RRF):
+   score(doc) = Σ 1/(k + rank_i)
+   where rank_i = rank from retrieval method i
+
+B. Weighted Linear Combination:
+   score(doc) = w1*semantic_score + w2*keyword_score
+
+C. LLM-based Fusion:
+   Let LLM decide which results are most relevant</code></pre>
+
+    <h2>RAG Evaluation Metrics</h2>
+
+    <h3>Retrieval Quality</h3>
+
+    <ul>
+      <li><strong>Context Recall:</strong> % of relevant info that was retrieved
+        <ul>
+          <li>Did we retrieve all necessary information?</li>
+          <li>Measured against ground truth</li>
+        </ul>
+      </li>
+      <li><strong>Context Precision:</strong> % of retrieved info that's relevant
+        <ul>
+          <li>Are retrieved docs actually helpful?</li>
+          <li>Less noise = better</li>
+        </ul>
+      </li>
+      <li><strong>MRR (Mean Reciprocal Rank):</strong> 1 / rank_of_first_relevant_doc
+        <ul>
+          <li>Measures ranking quality</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>Generation Quality</h3>
+
+    <ul>
+      <li><strong>Faithfulness:</strong> Answer grounded in retrieved context?
+        <ul>
+          <li>No hallucinations beyond provided docs</li>
+          <li>Can be LLM-evaluated</li>
+        </ul>
+      </li>
+      <li><strong>Answer Relevance:</strong> Does answer address the question?
+        <ul>
+          <li>Not just factual, but responsive</li>
+        </ul>
+      </li>
+      <li><strong>Answer Correctness:</strong> Factually accurate?
+        <ul>
+          <li>Requires ground truth</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>RAGAS Framework</h3>
+
+    <pre><code class="language-python"># RAGAS - RAG Assessment Framework
+from ragas import evaluate
+from ragas.metrics import (
+    faithfulness,
+    answer_relevancy,
+    context_recall,
+    context_precision
+)
+
+# Prepare evaluation data
+eval_data = dict(
+    question=["What is RAG?"],
+    answer=["RAG is..."],
+    contexts=[[doc1, doc2]],  # Retrieved docs
+    ground_truths=[["RAG combines..."]]  # Reference answers
+)
+
+# Evaluate
+result = evaluate(
+    dataset=eval_data,
+    metrics=[
+        faithfulness,
+        answer_relevancy,
+        context_recall,
+        context_precision
+    ]
+)
+
+print(result)</code></pre>
+
+    <h2>Production RAG Patterns</h2>
+
+    <h3>Pattern 1: Simple RAG</h3>
+
+    <pre><code>Use Case: FAQ, documentation Q&A
+Flow: Query → Retrieve → Generate
+Pros: Simple, fast, cost-effective
+Cons: Limited reasoning, may miss context</code></pre>
+
+    <h3>Pattern 2: Agentic RAG</h3>
+
+    <pre><code>Use Case: Complex queries requiring multi-step reasoning
+Flow:
+1. LLM plans retrieval strategy
+2. Execute multiple retrievals
+3. LLM synthesizes information
+4. Optionally: iterate with follow-up retrievals
+
+Example: ReAct, LangGraph, AutoGPT approaches</code></pre>
+
+    <h3>Pattern 3: Conversational RAG</h3>
+
+    <pre><code>Use Case: Multi-turn conversations
+Challenges:
+- Coreference resolution ("What about that one?")
+- Chat history management
+- Context accumulation
+
+Solution:
+1. Rephrase user query with chat history
+2. Standalone query for retrieval
+3. Include chat history + retrieved docs in context</code></pre>
+
+    <pre><code class="language-python"># Conversational RAG with LangChain
+from langchain.chains import ConversationalRetrievalChain
+
+qa_chain = ConversationalRetrievalChain.from_llm(
+    llm=llm,
+    retriever=retriever,
+    return_source_documents=True
+)
+
+chat_history = []
+
+# Turn 1
+query1 = "What is our return policy?"
+question_data = dict(question=query1, chat_history=chat_history)
+result1 = qa_chain(question_data)
+chat_history.append((query1, result1.get("answer")))
+
+# Turn 2 (with coreference)
+query2 = "What about international orders?"
+question_data = dict(question=query2, chat_history=chat_history)
+result2 = qa_chain(question_data)
+# LLM understands "international orders" in context of "return policy"</code></pre>
+
+    <h3>Pattern 4: Self-RAG</h3>
+
+    <p>LLM decides when to retrieve:</p>
+
+    <pre><code>Self-Reflective RAG:
+1. LLM evaluates if it needs external information
+   "Can I answer this with my own knowledge?"
+2. If yes: Generate directly
+3. If no: Trigger retrieval
+4. After retrieval: LLM evaluates if retrieved docs are useful
+5. If not useful: Re-retrieve with modified query
+
+Benefits:
+• Reduces unnecessary retrievals
+• Handles out-of-domain queries better
+• More efficient</code></pre>
+
+    <h2>Optimization Strategies</h2>
+
+    <h3>Chunking Optimization</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Approach</th>
+          <th>Chunk Size</th>
+          <th>Overlap</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Small chunks</td>
+          <td>256-512</td>
+          <td>50-100</td>
+          <td>Precise facts, Q&A</td>
+        </tr>
+        <tr>
+          <td>Medium chunks</td>
+          <td>512-1024</td>
+          <td>100-200</td>
+          <td>General purpose</td>
+        </tr>
+        <tr>
+          <td>Large chunks</td>
+          <td>1024-2048</td>
+          <td>200-400</td>
+          <td>Reasoning, context-heavy</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Top-K Selection</h3>
+
+    <ul>
+      <li><strong>K=3-5:</strong> Common default, balances context vs noise</li>
+      <li><strong>K=10-20:</strong> For reranking (retrieve more, rank, take top K)</li>
+      <li><strong>Dynamic K:</strong> Let LLM request more context if needed</li>
+      <li><strong>Threshold-based:</strong> Return all above similarity score threshold</li>
+    </ul>
+
+    <h3>Context Window Management</h3>
+
+    <pre><code>Challenge: Limited context window (even with 128K tokens)
+
+Strategies:
+1. Summarization: Summarize retrieved docs before including
+2. Compression: Remove redundant information
+3. Prioritization: Most relevant docs first
+4. Iterative: Multiple LLM calls with subsets of context</code></pre>
+
+    <h2>Common Pitfalls & Solutions</h2>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Common Issues</div>
+      <ul>
+        <li><strong>Problem:</strong> Poor retrieval quality
+          <ul>
+            <li>Solution: Better chunking, query transformation, reranking</li>
+          </ul>
+        </li>
+        <li><strong>Problem:</strong> LLM ignores retrieved context
+          <ul>
+            <li>Solution: Improve prompt, emphasize using provided context</li>
+          </ul>
+        </li>
+        <li><strong>Problem:</strong> Slow response times
+          <ul>
+            <li>Solution: Caching, async retrieval, smaller models</li>
+          </ul>
+        </li>
+        <li><strong>Problem:</strong> High costs
+          <ul>
+            <li>Solution: Optimize top-K, use cheaper models for retrieval</li>
+          </ul>
+        </li>
+        <li><strong>Problem:</strong> Outdated information
+          <ul>
+            <li>Solution: Incremental indexing, document versioning</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <h2>RAG vs Fine-Tuning</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>RAG</th>
+          <th>Fine-Tuning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Use Case</strong></td>
+          <td>Knowledge-intensive tasks</td>
+          <td>Behavior, style, format</td>
+        </tr>
+        <tr>
+          <td><strong>Updates</strong></td>
+          <td>Easy (update vector DB)</td>
+          <td>Requires retraining</td>
+        </tr>
+        <tr>
+          <td><strong>Cost</strong></td>
+          <td>Moderate (inference + retrieval)</td>
+          <td>High (training compute)</td>
+        </tr>
+        <tr>
+          <td><strong>Transparency</strong></td>
+          <td>High (cite sources)</td>
+          <td>Low (black box)</td>
+        </tr>
+        <tr>
+          <td><strong>Hallucinations</strong></td>
+          <td>Reduced (grounded)</td>
+          <td>Can still hallucinate</td>
+        </tr>
+        <tr>
+          <td><strong>Best For</strong></td>
+          <td>Dynamic knowledge, Q&A</td>
+          <td>Task-specific behavior</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Hybrid Approach:</strong> Fine-tune for behavior + RAG for knowledge (best of both!)</p>
+
+    <h2>Tools & Frameworks</h2>
+
+    <ul>
+      <li><strong>LangChain:</strong> Most popular, extensive integrations</li>
+      <li><strong>LlamaIndex:</strong> Specialized for RAG, excellent documentation</li>
+      <li><strong>Haystack:</strong> Production-focused, NLP pipelines</li>
+      <li><strong>Chroma:</strong> Simple vector DB with RAG support</li>
+      <li><strong>Weaviate:</strong> Vector DB with built-in RAG modules</li>
+      <li><strong>RAGAS:</strong> Evaluation framework</li>
+    </ul>
+
+    <h2>Summary</h2>
+
+    <div class="callout info">
+      <div class="callout-title">📝 Key Takeaways</div>
+      <ul>
+        <li>RAG grounds LLMs in factual, up-to-date information</li>
+        <li>Three stages: Indexing (offline), Retrieval, Generation (online)</li>
+        <li>Advanced techniques: query transformation, reranking, hybrid search</li>
+        <li>Evaluation: RAGAS framework for retrieval + generation quality</li>
+        <li>Production patterns: Simple, Agentic, Conversational, Self-RAG</li>
+        <li>Optimize: chunking strategy, top-K selection, context management</li>
+        <li>RAG + Fine-tuning hybrid = best results for many use cases</li>
+      </ul>
+    </div>
+
+    <h2>Key Papers & Resources</h2>
+
+    <ul>
+      <li>Lewis et al. (2020). "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" - Original RAG paper</li>
+      <li>RAGAS: https://github.com/explodinggradients/ragas</li>
+      <li>LangChain RAG Guide: https://python.langchain.com/docs/use_cases/question_answering/</li>
+      <li>LlamaIndex: https://docs.llamaindex.ai/</li>
+      <li>Anthropic's RAG best practices</li>
+    </ul>
+
+    <div class="navigation-buttons">
+      <a href={`${import.meta.env.BASE_URL}chapters/07-embeddings`} class="btn btn-secondary">← Previous: Embeddings & Vector DBs</a>
+      <a href={`${import.meta.env.BASE_URL}chapters/09-fine-tuning`} class="btn btn-primary">Next: Fine-Tuning →</a>
+    </div>
+  </article>
+</BaseLayout>
+

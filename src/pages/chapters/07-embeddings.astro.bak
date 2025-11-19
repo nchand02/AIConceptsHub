@@ -171,7 +171,7 @@ response = client.embeddings.create(
 )
 
 embedding = response.data[0].embedding  # List of 1536 floats
-print("Embedding shape: ", len(embedding)")
+print("Embedding shape:", len(embedding))
 # Output: Embedding shape: 1536
 
 # Batch processing (up to 2048 inputs)
@@ -420,4 +420,392 @@ import pinecone
 # Initialize
 pinecone.init(api_key="your-api-key", environment="us-west1-gcp")
 
-# 
+# Create index
+pinecone.create_index(
+    name="my-index",
+    dimension=1536,  # Must match embedding dimension
+    metric="cosine"   # cosine, euclidean, or dotproduct
+)
+
+# Connect to index
+index = pinecone.Index("my-index")
+
+# Upsert vectors
+vectors = [
+    ("doc1", [0.1, 0.2, ...], {"text": "First document"}),
+    ("doc2", [0.3, 0.4, ...], {"text": "Second document"}),
+]
+index.upsert(vectors=vectors)
+
+# Query (find similar)
+query_vector = [0.15, 0.25, ...]  # Your query embedding
+results = index.query(
+    vector=query_vector,
+    top_k=5,           # Return top 5 matches
+    include_metadata=True
+)
+
+for match in results['matches']:
+    print(f"ID: {match['id']}, Score: {match['score']}")
+    print(f"Text: {match['metadata']['text']}")</code></pre>
+
+    <h3>Weaviate Example (Open Source)</h3>
+
+    <pre><code class="language-python"># Weaviate - Open source vector database
+import weaviate
+
+# Connect to Weaviate
+client = weaviate.Client("http://localhost:8080")
+
+# Create schema
+schema = {
+    "class": "Document",
+    "vectorizer": "text2vec-openai",  # Or use custom embeddings
+    "properties": [
+        {"name": "text", "dataType": ["text"]},
+        {"name": "category", "dataType": ["string"]},
+    ]
+}
+client.schema.create_class(schema)
+
+# Add objects (auto-vectorizes with text2vec-openai)
+client.data_object.create(
+    class_name="Document",
+    data_object={
+        "text": "AI is transforming technology",
+        "category": "tech"
+    }
+)
+
+# Semantic search
+result = client.query.get(
+    "Document", ["text", "category"]
+).with_near_text({
+    "concepts": ["artificial intelligence"]
+}).with_limit(5).do()
+
+print(result)</code></pre>
+
+    <h3>Chroma Example (Lightweight, Python-First)</h3>
+
+    <pre><code class="language-python"># Chroma - Lightweight, easy to use
+import chromadb
+
+# Create client
+client = chromadb.Client()
+
+# Create collection
+collection = client.create_collection(name="my_docs")
+
+# Add documents (auto-generates embeddings)
+collection.add(
+    documents=[
+        "The cat sits on the mat",
+        "A dog plays in the park",
+        "Machine learning is fascinating"
+    ],
+    metadatas=[
+        {"source": "book1"},
+        {"source": "book2"},
+        {"source": "article"}
+    ],
+    ids=["id1", "id2", "id3"]
+)
+
+# Query
+results = collection.query(
+    query_texts=["Tell me about animals"],
+    n_results=2
+)
+
+print(results['documents'])
+print(results['distances'])</code></pre>
+
+    <h2>Approximate Nearest Neighbor (ANN) Algorithms</h2>
+
+    <h3>How Vector DBs Scale</h3>
+
+    <pre><code>1. HNSW (Hierarchical Navigable Small World)
+   • Graph-based structure
+   • Multiple layers of connections
+   • Fast search: O(log n)
+   • Used by: Pinecone, Weaviate, Qdrant
+
+   [Top Layer]     A ←→ B
+                   ↓     ↓
+   [Mid Layer]   A ←→ C ←→ B
+                 ↓   ↓   ↓
+   [Bottom]    A-C-D-E-B-F-G
+
+2. IVF (Inverted File Index)
+   • Partition space into clusters
+   • Search only relevant clusters
+   • Trade-off: speed vs accuracy
+   • Used by: FAISS, Milvus
+
+3. Product Quantization (PQ)
+   • Compress vectors for memory efficiency
+   • Split vector into subvectors
+   • Quantize each subvector
+   • 8-10x memory reduction
+
+4. LSH (Locality-Sensitive Hashing)
+   • Hash similar vectors to same buckets
+   • Probabilistic guarantees
+   • Very fast, less accurate</code></pre>
+
+    <h3>Accuracy vs Speed Trade-off</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Speed</th>
+          <th>Memory</th>
+          <th>Accuracy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Exact (brute force)</td>
+          <td>Slow</td>
+          <td>High</td>
+          <td>100%</td>
+        </tr>
+        <tr>
+          <td>HNSW</td>
+          <td>Fast</td>
+          <td>High</td>
+          <td>95-99%</td>
+        </tr>
+        <tr>
+          <td>IVF</td>
+          <td>Fast</td>
+          <td>Medium</td>
+          <td>90-95%</td>
+        </tr>
+        <tr>
+          <td>IVF + PQ</td>
+          <td>Very Fast</td>
+          <td>Low</td>
+          <td>85-90%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Chunking Strategies</h2>
+
+    <p>How to split documents into embeddable pieces:</p>
+
+    <h3>Why Chunk?</h3>
+
+    <ul>
+      <li><strong>Context Window Limits:</strong> Embedding models have max input length (512-8192 tokens)</li>
+      <li><strong>Semantic Granularity:</strong> Each chunk should contain coherent idea</li>
+      <li><strong>Retrieval Precision:</strong> Smaller chunks = more precise matches</li>
+    </ul>
+
+    <h3>Chunking Methods</h3>
+
+    <pre><code>1. Fixed-Size Chunking
+   • Split every N characters/tokens
+   • Overlap: include last M tokens from previous chunk
+
+   chunk_size = 1000 characters
+   overlap = 200 characters
+
+   Pros: Simple, predictable
+   Cons: May split mid-sentence/paragraph
+
+2. Sentence-Based Chunking
+   • Use sentence boundaries
+   • Group sentences up to max size
+
+   Pros: Preserves sentence integrity
+   Cons: Variable chunk sizes
+
+3. Paragraph-Based Chunking
+   • Split on paragraph boundaries
+   • Maintain document structure
+
+   Pros: Natural semantic units
+   Cons: Paragraphs may be too large/small
+
+4. Semantic Chunking
+   • Use embeddings to find topic boundaries
+   • Group semantically similar sentences
+
+   Pros: Highest quality
+   Cons: Computationally expensive
+
+5. Recursive Chunking (LangChain default)
+   • Try to split on: "\n\n" → "\n" → ". " → " "
+   • Maintain hierarchy
+
+   Pros: Balanced approach
+   Cons: More complex</code></pre>
+
+    <h3>Example: LangChain Text Splitter</h3>
+
+    <pre><code class="language-python">from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,         # Target chunk size
+    chunk_overlap=200,       # Overlap between chunks
+    length_function=len,     # How to measure length
+    separators=["\n\n", "\n", ". ", " ", ""]  # Split hierarchy
+)
+
+chunks = text_splitter.split_text(long_document)
+
+# Each chunk is ~1000 chars with 200 char overlap
+print(f"Created {len(chunks)} chunks")
+print(f"Chunk 1: {chunks[0][:100]}...")</code></pre>
+
+    <h3>Best Practices</h3>
+
+    <ul>
+      <li><strong>Chunk Size:</strong> 500-1500 tokens is common sweet spot</li>
+      <li><strong>Overlap:</strong> 10-20% overlap helps preserve context</li>
+      <li><strong>Metadata:</strong> Store source, page number, section for better retrieval</li>
+      <li><strong>Experiment:</strong> Test different strategies for your use case</li>
+    </ul>
+
+    <h2>Hybrid Search</h2>
+
+    <p>Combine vector search (semantic) with keyword search (lexical):</p>
+
+    <pre><code>Vector Search (Semantic):
+Query: "feline"
+Finds: "cat", "kitten", "tiger" ✅
+
+Keyword Search (Lexical - BM25):
+Query: "feline"
+Finds: only exact "feline" matches ❌
+
+Hybrid Search:
+Combines both approaches:
+1. Get top K results from vector search
+2. Get top K results from keyword search
+3. Merge with Reciprocal Rank Fusion (RRF)
+
+score = Σ 1/(k + rank_i)
+
+Benefits:
+• Best of both worlds
+• Handles rare terms, acronyms (keyword)
+• Understands semantics (vector)
+• 10-20% improvement in many cases</code></pre>
+
+    <h3>Weaviate Hybrid Search Example</h3>
+
+    <pre><code class="language-python"># Weaviate hybrid search
+result = client.query.get(
+    "Document", ["text"]
+).with_hybrid(
+    query="artificial intelligence",
+    alpha=0.5  # 0 = pure keyword, 1 = pure vector, 0.5 = balanced
+).with_limit(10).do()</code></pre>
+
+    <h2>Filtering & Metadata</h2>
+
+    <p>Combine vector search with structured filters:</p>
+
+    <pre><code class="language-python"># Pinecone filtering
+results = index.query(
+    vector=query_embedding,
+    top_k=10,
+    filter={
+        "category": {"$eq": "technology"},
+        "date": {"$gte": "2024-01-01"},
+        "author": {"$in": ["Alice", "Bob"]}
+    }
+)
+
+# Qdrant filtering
+from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+results = client.search(
+    collection_name="my_collection",
+    query_vector=query_embedding,
+    query_filter=Filter(
+        must=[
+            FieldCondition(
+                key="category",
+                match=MatchValue(value="technology")
+            )
+        ]
+    ),
+    limit=10
+)</code></pre>
+
+    <h2>Production Considerations</h2>
+
+    <h3>Performance Optimization</h3>
+
+    <ul>
+      <li><strong>Batch Operations:</strong> Upsert/query in batches (100-1000 at a time)</li>
+      <li><strong>Caching:</strong> Cache frequently accessed embeddings</li>
+      <li><strong>Index Tuning:</strong> Adjust HNSW parameters (M, efConstruction, efSearch)</li>
+      <li><strong>Quantization:</strong> Use scalar or product quantization for large datasets</li>
+      <li><strong>Sharding:</strong> Distribute across multiple nodes for scale</li>
+    </ul>
+
+    <h3>Monitoring & Evaluation</h3>
+
+    <ul>
+      <li><strong>Recall@K:</strong> % of relevant docs in top K results</li>
+      <li><strong>Precision@K:</strong> % of top K results that are relevant</li>
+      <li><strong>Latency:</strong> Query response time (p50, p95, p99)</li>
+      <li><strong>Relevance:</strong> Human evaluation, click-through rates</li>
+    </ul>
+
+    <h2>Common Use Cases</h2>
+
+    <div class="callout success">
+      <div class="callout-title">✅ Real-World Applications</div>
+      <ul>
+        <li><strong>Semantic Search:</strong> Find documents by meaning, not just keywords</li>
+        <li><strong>RAG (Retrieval-Augmented Generation):</strong> Retrieve relevant context for LLMs</li>
+        <li><strong>Recommendation Systems:</strong> Find similar products, content</li>
+        <li><strong>Question Answering:</strong> Find answers in knowledge bases</li>
+        <li><strong>Duplicate Detection:</strong> Find similar/duplicate content</li>
+        <li><strong>Clustering:</strong> Group similar documents automatically</li>
+        <li><strong>Anomaly Detection:</strong> Find outliers in embeddings space</li>
+        <li><strong>Multimodal Search:</strong> Search images with text (CLIP)</li>
+      </ul>
+    </div>
+
+    <h2>Summary</h2>
+
+    <div class="callout info">
+      <div class="callout-title">📝 Key Takeaways</div>
+      <ul>
+        <li>Embeddings convert data to dense vectors capturing semantic meaning</li>
+        <li>Modern models: text-embedding-3 (OpenAI), Sentence-Transformers (open source)</li>
+        <li>Vector databases enable efficient similarity search at scale</li>
+        <li>ANN algorithms (HNSW, IVF) provide 10-100x speedup with minimal accuracy loss</li>
+        <li>Chunking strategies: balance between size, overlap, and semantic coherence</li>
+        <li>Hybrid search combines semantic + keyword for best results</li>
+        <li>Production: batch operations, monitoring, and proper index tuning</li>
+      </ul>
+    </div>
+
+    <h2>Key Resources</h2>
+
+    <ul>
+      <li>OpenAI Embeddings Guide: https://platform.openai.com/docs/guides/embeddings</li>
+      <li>Sentence-Transformers Documentation: https://www.sbert.net/</li>
+      <li>Pinecone Learning Center: https://www.pinecone.io/learn/</li>
+      <li>Weaviate Documentation: https://weaviate.io/developers/weaviate</li>
+      <li>MTEB Leaderboard: https://huggingface.co/spaces/mteb/leaderboard</li>
+      <li>Papers: CLIP (2021), Sentence-BERT (2019), Word2Vec (2013)</li>
+    </ul>
+
+    <div class="navigation-buttons">
+      <a href={`${import.meta.env.BASE_URL}chapters/06-generative-ai`} class="btn btn-secondary">← Previous: Generative AI</a>
+      <a href={`${import.meta.env.BASE_URL}chapters/08-rag`} class="btn btn-primary">Next: RAG Systems →</a>
+    </div>
+  </article>
+</BaseLayout>
+
