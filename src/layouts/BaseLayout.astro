@@ -8,21 +8,21 @@ interface Props {
 const { title, description = "Comprehensive guide to Artificial Intelligence and Machine Learning", currentPage = "" } = Astro.props;
 
 const chapters = [
-  { title: "Foundations of AI", path: "/chapters/01-foundations" },
-  { title: "Machine Learning", path: "/chapters/02-machine-learning" },
-  { title: "Deep Learning", path: "/chapters/03-deep-learning" },
-  { title: "Transformers", path: "/chapters/04-transformers" },
-  { title: "Large Language Models", path: "/chapters/05-llms" },
-  { title: "Generative AI", path: "/chapters/06-generative-ai" },
-  { title: "Embeddings & Vector DBs", path: "/chapters/07-embeddings" },
-  { title: "RAG Systems", path: "/chapters/08-rag" },
-  { title: "Fine-Tuning", path: "/chapters/09-fine-tuning" },
-  { title: "Multimodal AI", path: "/chapters/10-multimodal" },
-  { title: "AI Agents & MCP", path: "/chapters/11-agents" },
-  { title: "AI Tooling", path: "/chapters/12-tooling" },
-  { title: "AI Infrastructure", path: "/chapters/13-infrastructure" },
-  { title: "System Design", path: "/chapters/14-system-design" },
-  { title: "Glossary", path: "/chapters/15-glossary" }
+  { title: "Foundations of AI", path: `${import.meta.env.BASE_URL}chapters/01-foundations` },
+  { title: "Machine Learning", path: `${import.meta.env.BASE_URL}chapters/02-machine-learning` },
+  { title: "Deep Learning", path: `${import.meta.env.BASE_URL}chapters/03-deep-learning` },
+  { title: "Transformers", path: `${import.meta.env.BASE_URL}chapters/04-transformers` },
+  { title: "Large Language Models", path: `${import.meta.env.BASE_URL}chapters/05-llms` },
+  { title: "Generative AI", path: `${import.meta.env.BASE_URL}chapters/06-generative-ai` },
+  { title: "Embeddings & Vector DBs", path: `${import.meta.env.BASE_URL}chapters/07-embeddings` },
+  { title: "RAG Systems", path: `${import.meta.env.BASE_URL}chapters/08-rag` },
+  { title: "Fine-Tuning", path: `${import.meta.env.BASE_URL}chapters/09-fine-tuning` },
+  { title: "Multimodal AI", path: `${import.meta.env.BASE_URL}chapters/10-multimodal` },
+  { title: "AI Agents & MCP", path: `${import.meta.env.BASE_URL}chapters/11-agents` },
+  { title: "AI Tooling", path: `${import.meta.env.BASE_URL}chapters/12-tooling` },
+  { title: "AI Infrastructure", path: `${import.meta.env.BASE_URL}chapters/13-infrastructure` },
+  { title: "System Design", path: `${import.meta.env.BASE_URL}chapters/14-system-design` },
+  { title: "Glossary", path: `${import.meta.env.BASE_URL}chapters/15-glossary` }
 ];
 ---
 
@@ -75,8 +75,8 @@ const chapters = [
     });
   </script>
   
-  <link rel="stylesheet" href="/styles/global.css">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href={`${import.meta.env.BASE_URL}styles/global.css`}>
+  <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`}>
 </head>
 <body>
   <div class="app-container">
@@ -84,7 +84,7 @@ const chapters = [
     <header class="main-header">
       <div class="header-content">
         <div class="logo">
-          <a href="/">
+          <a href={import.meta.env.BASE_URL}>
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
               <path d="M16 8L22 12V20L16 24L10 20V12L16 8Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
@@ -101,9 +101,9 @@ const chapters = [
         </div>
         
         <nav class="main-nav">
-          <a href="/" class={currentPage === "" ? "active" : ""}>Home</a>
-          <a href="/chapters/01-foundations" class={currentPage.startsWith("/chapters") ? "active" : ""}>Chapters</a>
-          <a href="https://github.com/yourusername/AI_Tutorial_For_Everyone" target="_blank" rel="noopener">GitHub</a>
+          <a href={import.meta.env.BASE_URL} class={currentPage === "" ? "active" : ""}>Home</a>
+          <a href={`${import.meta.env.BASE_URL}chapters/01-foundations`} class={currentPage.startsWith("/chapters") ? "active" : ""}>Chapters</a>
+          <a href="https://github.com/nchand02/AIConceptsHub" target="_blank" rel="noopener">GitHub</a>
         </nav>
         
         <div class="header-actions">
@@ -176,11 +176,17 @@ const chapters = [
         <!-- Footer -->
         <footer class="main-footer">
           <div class="footer-content">
-            <p>&copy; {new Date().getFullYear()} AI Learning Portal. Open source educational resource.</p>
+            <div class="footer-about">
+              <p class="footer-title">AI Learning Portal</p>
+              <p class="footer-subtitle">
+                Created by <a href="https://nchand02.github.io/bio" target="_blank" rel="noopener noreferrer" class="author-link">Navdeep Singh Chander</a>
+              </p>
+              <p class="footer-copyright">&copy; {new Date().getFullYear()} Open source educational resource.</p>
+            </div>
             <div class="footer-links">
-              <a href="https://github.com/yourusername/AI_Tutorial_For_Everyone" target="_blank">GitHub</a>
-              <a href="https://github.com/yourusername/AI_Tutorial_For_Everyone/issues" target="_blank">Report Issue</a>
-              <a href="https://github.com/yourusername/AI_Tutorial_For_Everyone/blob/main/LICENSE" target="_blank">License</a>
+              <a href="https://github.com/nchand02/AIConceptsHub" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <a href="https://github.com/nchand02/AIConceptsHub/issues" target="_blank" rel="noopener noreferrer">Report Issue</a>
+              <a href="https://nchand02.github.io/bio" target="_blank" rel="noopener noreferrer">About Author</a>
             </div>
           </div>
         </footer>
@@ -189,7 +195,7 @@ const chapters = [
   </div>
 
   <!-- Scripts -->
-  <script src="/scripts/main.js"></script>
+  <script src={`${import.meta.env.BASE_URL}scripts/main.js`}></script>
   <script is:inline>
     // Initialize theme
     const theme = localStorage.getItem('theme') || 'light';

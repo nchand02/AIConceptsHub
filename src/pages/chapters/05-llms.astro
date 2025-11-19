@@ -84,23 +84,70 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <tr>
           <td><strong>GPT-4</strong></td>
           <td>2023</td>
-          <td>~1.7T</td>
-          <td>Multimodal, advanced reasoning, longer context</td>
+          <td>Undisclosed*</td>
+          <td>Multimodal (text+vision), 128K context, advanced reasoning</td>
         </tr>
         <tr>
           <td><strong>Claude 3</strong></td>
           <td>2024</td>
-          <td>Unknown</td>
-          <td>200K context, constitutional AI</td>
+          <td>Undisclosed</td>
+          <td>200K context, constitutional AI, multi-modal</td>
+        </tr>
+        <tr>
+          <td><strong>GPT-4o</strong></td>
+          <td>2024</td>
+          <td>Undisclosed</td>
+          <td>Omni-modal (text/vision/audio), 2x faster, 128K context</td>
         </tr>
         <tr>
           <td><strong>Llama 3</strong></td>
           <td>2024</td>
-          <td>70B/405B</td>
+          <td>8B/70B</td>
           <td>Open weights, excellent performance</td>
+        </tr>
+        <tr>
+          <td><strong>Claude 3.5 Sonnet</strong></td>
+          <td>2024</td>
+          <td>Undisclosed</td>
+          <td>Top-tier benchmarks, improved coding, 200K context</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 1.5 Pro</strong></td>
+          <td>2024</td>
+          <td>Undisclosed</td>
+          <td>1M+ token context (up to 2M), multimodal</td>
+        </tr>
+        <tr>
+          <td><strong>Llama 3.1</strong></td>
+          <td>2024</td>
+          <td>8B/70B/405B</td>
+          <td>Open weights, 128K context, tool use, multilingual</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 2.0 Flash</strong></td>
+          <td>2024</td>
+          <td>Undisclosed</td>
+          <td>Multimodal, native tool use, real-time interaction</td>
         </tr>
       </tbody>
     </table>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Note on Parameter Counts</div>
+      <p>
+        <strong>*Parameter Disclosure:</strong> Many modern LLM providers (OpenAI, Anthropic, Google) no longer
+        disclose exact parameter counts. Reasons include:
+      </p>
+      <ul>
+        <li><strong>Competitive advantage:</strong> Architectural details are proprietary</li>
+        <li><strong>Mixture of Experts (MoE):</strong> Total vs. active parameters distinction makes counts misleading</li>
+        <li><strong>Focus shift:</strong> Performance matters more than raw parameter count</li>
+      </ul>
+      <p>
+        Industry estimates suggest GPT-4 uses 1-1.8 trillion parameters with MoE architecture (~200B active per token),
+        but these are <strong>unverified</strong>. When "Undisclosed" is shown, treat parameter counts as proprietary information.
+      </p>
+    </div>
 
     <h2>LLM Architecture</h2>
 
@@ -130,7 +177,22 @@ Typical specs (GPT-3 175B):
 - Layers: 96
 - Hidden size: 12,288
 - Attention heads: 96
-- Context window: 2,048 → 128K (GPT-4 Turbo)</code></pre>
+
+Context Windows (2024 State-of-the-art):
+- GPT-4 Turbo: 128K tokens (~96K words)
+- GPT-4o: 128K tokens
+- Claude 3 Opus/Sonnet: 200K tokens (~150K words)
+- Llama 3.1: 128K tokens
+- Gemini 1.5 Pro: 1M tokens (~750K words)
+- Gemini 1.5 Flash: 1M tokens
+- Gemini 2.0 Flash: 1M tokens (up to 2M in testing)
+
+Long context enables:
+• Processing entire codebases (10K+ files)
+• Analyzing full books or research papers
+• Multi-hour conversation history
+• Complex document understanding
+• "Needle in haystack" retrieval across massive context</code></pre>
 
     <h3>Key Architectural Innovations</h3>
 
@@ -148,11 +210,11 @@ Typical specs (GPT-3 175B):
     
     <p>Unsupervised learning on massive text corpora:</p>
 
-    <pre><code>Objective: Next Token Prediction
+    <pre><code>{`Objective: Next Token Prediction
 Given: "The cat sat on the"
 Predict: "mat" (or any valid continuation)
 
-Loss = -log P(w_t | w_1, ..., w_{{t-1}})
+Loss = -log P(w_t | w_1, ..., w_{t-1})
 
 Training Data Scale:
 - GPT-3: ~500B tokens
@@ -162,7 +224,7 @@ Training Data Scale:
 Training Compute:
 - GPT-3: ~3,640 petaflop-days
 - PaLM: ~2,500 petaflop-days
-- Modern LLMs: 10,000+ petaflop-days
+- Modern LLMs: 10,000+ petaflop-days`}
 
 Cost: $2M - $100M+ per training run</code></pre>
 
@@ -170,32 +232,30 @@ Cost: $2M - $100M+ per training run</code></pre>
     
     <p>Train on high-quality instruction-response pairs:</p>
 
-    <pre><code>Example training data:
-{{
+    <pre><code>{`Example training data:
+{
   "instruction": "Explain quantum computing to a 10-year-old",
   "response": "Imagine a magical coin that can be heads AND tails at the same time..."
-}}
+}
 
 Dataset size: 10K - 1M examples
 Duration: Hours to days
-Purpose: Align model to follow instructions</code></pre>
+Purpose: Align model to follow instructions`}</code></pre>
 
     <h3>Phase 3: Reinforcement Learning from Human Feedback (RLHF)</h3>
     
     <p>Optimize for human preferences:</p>
 
     <div class="diagram-container">
-      <pre class="mermaid">
-graph TB
+      <pre class="mermaid" set:html={`graph TB
     A[Generate Multiple Responses] --> B[Human Ranks Responses]
     B --> C[Train Reward Model]
     C --> D[PPO Training]
     D --> E[Improved LLM]
     E --> A
-    
+
     style A fill:#e1f5ff
-    style E fill:#d4edda
-      </pre>
+    style E fill:#d4edda`} />
     </div>
 
     <pre><code>Steps:
@@ -205,6 +265,103 @@ graph TB
 4. Balance: maximize reward while staying close to SFT model
 
 Key challenge: Reward hacking (model exploits reward function)</code></pre>
+
+    <h3>Modern Alternatives to RLHF</h3>
+
+    <h4>Direct Preference Optimization (DPO)</h4>
+
+    <p>DPO simplifies RLHF by eliminating the separate reward model, making training more stable and efficient:</p>
+
+    <pre><code>Traditional RLHF:
+  SFT Model → Reward Model → RL Training (PPO) → Final Model
+  (Complex, unstable, requires careful tuning)
+
+DPO Approach:
+  SFT Model → Direct Optimization on Preferences → Final Model
+  (Simpler, more stable, competitive performance)
+
+Key Formula:
+  L_DPO = -E[log σ(β log π(y_w|x)/π_ref(y_w|x) - β log π(y_l|x)/π_ref(y_l|x))]
+
+  Where:
+  - y_w = preferred (winning) response
+  - y_l = less preferred (losing) response
+  - π_ref = reference model (SFT checkpoint)
+  - β = temperature parameter
+
+Advantages:
+• No separate reward model needed
+• More stable optimization
+• Faster training
+• Competitive or better results than RLHF
+• Widely adopted in open-source models (Mistral, Zephyr)
+
+Used by: Mistral, Zephyr, many Hugging Face models</code></pre>
+
+    <h4>Reinforcement Learning from AI Feedback (RLAIF)</h4>
+
+    <p>RLAIF replaces human raters with AI models, enabling massive scale:</p>
+
+    <pre><code>Process:
+1. Generate multiple responses from LLM
+2. Use stronger AI model (e.g., GPT-4) to rank responses
+3. Train using RLHF or DPO on AI-generated preferences
+
+Benefits:
+• Dramatically scales feedback collection (1000x+ cheaper)
+• Consistent evaluation criteria
+• Faster iteration cycles
+• Combines human principles (in AI rater) with AI scale
+
+Drawbacks:
+• AI rater biases propagate to final model
+• May miss nuanced human preferences
+• Requires high-quality AI rater
+
+Hybrid Approach (Best Practice):
+• Use human feedback for core values and edge cases
+• Use AI feedback for bulk preference data
+• Validate AI ratings on sample of human-judged data
+
+Used by: Google (Constitutional AI for Bard/Gemini),
+         Anthropic (Claude with Constitutional AI)</code></pre>
+
+    <h4>Constitutional AI</h4>
+
+    <p>Anthropic's approach to alignment using AI-generated feedback based on explicit principles:</p>
+
+    <pre><code>Two-Phase Training:
+
+Phase 1: Self-Critique and Revision
+1. Model generates initial response
+2. Model critiques response against constitutional principles
+3. Model revises response to align with principles
+4. Supervised learning on revised responses
+
+Phase 2: RLAIF
+1. Generate multiple responses to prompts
+2. Model evaluates which response better follows principles
+3. Train preference model on AI evaluations
+4. Use RL to optimize for constitutional alignment
+
+Constitutional Principles (examples):
+• "Choose the response that is most helpful, harmless, and honest"
+• "Avoid responses that could cause physical, emotional, or financial harm"
+• "Respect human autonomy and privacy"
+
+Result: Claude's emphasis on helpfulness, harmlessness, honesty (HHH)</code></pre>
+
+    <div class="callout info">
+      <div class="callout-title">🔄 Evolution of Alignment Methods (2020-2024)</div>
+      <p>The field has rapidly evolved:</p>
+      <ul>
+        <li><strong>2020-2022:</strong> RLHF with PPO becomes standard (InstructGPT, ChatGPT)</li>
+        <li><strong>2023:</strong> DPO emerges as simpler alternative</li>
+        <li><strong>2023-2024:</strong> RLAIF scales preference collection</li>
+        <li><strong>2024:</strong> Hybrid approaches combine human oversight with AI scale</li>
+        <li><strong>Trend:</strong> Moving toward more efficient, scalable alignment without sacrificing quality</li>
+      </ul>
+    </div>
 
     <h2>Scaling Laws</h2>
 
@@ -225,9 +382,14 @@ Example:
 
 Implication: Training data is as important as model size</code></pre>
 
-    <h3>Emergent Abilities</h3>
-    
-    <p>Capabilities that suddenly appear at sufficient scale:</p>
+    <h3>Emergent Abilities: Understanding the Debate</h3>
+
+    <p>The concept of "emergent abilities" in LLMs refers to capabilities that appear or dramatically improve at scale.
+    However, this topic is actively debated in the research community (2023-2024):</p>
+
+    <h4>Original Claim (Wei et al., 2022)</h4>
+
+    <p>Certain capabilities "emerge" unpredictably at scale—appearing suddenly rather than improving gradually:</p>
 
     <ul>
       <li><strong>Few-shot learning:</strong> Learn new tasks from examples in prompt</li>
@@ -236,6 +398,85 @@ Implication: Training data is as important as model size</code></pre>
       <li><strong>Multi-step reasoning:</strong> Solve problems requiring multiple inferential steps</li>
       <li><strong>Instruction following:</strong> Understand and execute complex instructions</li>
     </ul>
+
+    <h4>Counter-Argument (Schaeffer et al., 2023: "Mirage of Emergence")</h4>
+
+    <p>The appearance of "emergence" may be an artifact of how we measure, not a genuine phase transition:</p>
+
+    <pre><code>Key Points:
+• Non-linear metrics can make smooth improvements appear "emergent"
+• Using different metrics shows continuous, predictable scaling
+• No evidence of sharp transitions when measured appropriately
+
+Example:
+- Metric: Exact match accuracy → Appears "emergent" (0% → 60% suddenly)
+- Metric: Token-level accuracy → Shows smooth improvement (gradual 10% → 60%)
+
+Implication: The way we measure determines whether we see "emergence"</code></pre>
+
+    <h4>Current Consensus (2024)</h4>
+
+    <div class="callout info">
+      <div class="callout-title">🔬 Scientific Understanding (2024)</div>
+      <p><strong>What we know for certain:</strong></p>
+      <ul>
+        <li>✅ <strong>Scaling improves capabilities:</strong> Larger models consistently perform better</li>
+        <li>✅ <strong>Qualitative shifts occur:</strong> Models cross thresholds where tasks become solvable</li>
+        <li>✅ <strong>Measurement matters:</strong> How we evaluate determines perceived emergence</li>
+      </ul>
+      <p><strong>What remains debated:</strong></p>
+      <ul>
+        <li>⚠️ Whether improvements are truly "emergent" (sudden) vs. "continuous" (gradual)</li>
+        <li>⚠️ Whether emergence is a property of models or metrics</li>
+        <li>⚠️ Predictability of capability thresholds</li>
+      </ul>
+      <p><strong>Practical takeaway:</strong> Scaling reliably improves LLM performance across tasks, enabling
+      new capabilities at larger scales. Whether these improvements are "emergent" or "continuous" is an
+      ongoing scientific debate, but the practical outcome is clear: bigger, better-trained models can do more.</p>
+    </div>
+
+    <h4>Capabilities That Improve With Scale (Verified)</h4>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th>Scale Threshold</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Few-shot learning</td>
+          <td>~10B+ parameters</td>
+          <td>GPT-3 (2020), verified across models</td>
+        </tr>
+        <tr>
+          <td>Chain-of-thought</td>
+          <td>~60B+ parameters</td>
+          <td>PaLM (2022), works with prompting</td>
+        </tr>
+        <tr>
+          <td>Multi-step math</td>
+          <td>~70B+ with CoT</td>
+          <td>GSM8K benchmark improvements</td>
+        </tr>
+        <tr>
+          <td>Code generation</td>
+          <td>~10B+ (basic), 70B+ (advanced)</td>
+          <td>Codex, Code Llama, GPT-4</td>
+        </tr>
+        <tr>
+          <td>Complex reasoning</td>
+          <td>~100B+</td>
+          <td>GPT-4, Claude 3, improvements on MMLU</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Key insight:</strong> Focus on what models can do at different scales rather than debating
+    whether the improvement mechanism is "emergent." Practical deployment should test specific capabilities
+    on relevant benchmarks rather than assuming emergence.</p>
 
     <h2>Prompting Techniques</h2>
 
@@ -255,8 +496,19 @@ English: Good morning → French:"
 
 Output: "Bonjour" or "Bon matin"</code></pre>
 
-    <h3>Chain-of-Thought (CoT)</h3>
-    
+    <h3>Chain-of-Thought (CoT) Prompting</h3>
+
+    <p>CoT dramatically improves reasoning by encouraging step-by-step thinking. Critical for complex problems:</p>
+
+    <h4>Standard Prompting (Struggles on Complex Tasks)</h4>
+
+    <pre><code>Prompt: "Roger has 5 tennis balls. He buys 2 more cans of tennis balls.
+Each can has 3 tennis balls. How many tennis balls does he have now?"
+
+Output: "7" ❌ (Incorrect - common error without reasoning)</code></pre>
+
+    <h4>Chain-of-Thought Prompting (Much Better)</h4>
+
     <pre><code>Prompt: "Roger has 5 tennis balls. He buys 2 more cans of tennis balls. 
 Each can has 3 tennis balls. How many tennis balls does he have now?
 
@@ -264,63 +516,277 @@ Let's think step by step:"
 
 Output:
 "1. Roger starts with 5 tennis balls
-2. He buys 2 cans
-3. Each can has 3 balls, so 2 × 3 = 6 balls
-4. Total: 5 + 6 = 11 tennis balls
-Answer: 11"</code></pre>
+2. He buys 2 cans of tennis balls
+3. Each can has 3 balls, so 2 cans × 3 balls = 6 balls
+4. Total: 5 original balls + 6 new balls = 11 tennis balls
+Answer: 11" ✅ (Correct)</code></pre>
+
+    <h4>CoT Variants</h4>
+
+    <p><strong>1. Zero-Shot CoT (Simplest - Just Add Magic Phrase)</strong></p>
+
+    <pre><code>Prompt: "[Your question]
+Let's think step by step."
+
+Performance Boost: +10-20% on reasoning tasks
+Works because: Phrase triggers reasoning patterns from training data</code></pre>
+
+    <p><strong>2. Few-Shot CoT (Provide Reasoning Examples)</strong></p>
+
+    <pre><code>Prompt:
+"Q: If a train travels 60 mph for 2.5 hours, how far does it go?
+A: Let's think step by step:
+- Speed = 60 mph
+- Time = 2.5 hours
+- Distance = Speed × Time = 60 × 2.5 = 150 miles
+
+Q: [Your actual question]
+A: Let's think step by step:"
+
+Performance: +15-30% improvement on complex reasoning</code></pre>
+
+    <p><strong>3. Self-Consistency CoT (Generate Multiple Paths, Vote)</strong></p>
+
+    <pre><code>Process:
+1. Generate 5-10 reasoning paths with CoT (with temperature > 0)
+2. Execute each reasoning chain
+3. Take majority vote of final answers
+
+Example:
+Path 1: Answer = 11 ✓
+Path 2: Answer = 11 ✓
+Path 3: Answer = 11 ✓
+Path 4: Answer = 9 ✗
+Path 5: Answer = 11 ✓
+Majority: 11 (4/5 votes) → Final answer
+
+Performance: +10-25% over standard CoT
+Cost: 5-10x more tokens/compute</code></pre>
+
+    <h4>When CoT Helps Most</h4>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Task Type</th>
+          <th>Improvement</th>
+          <th>Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Multi-step math</td>
+          <td>+30-50%</td>
+          <td>GSM8K, MATH datasets</td>
+        </tr>
+        <tr>
+          <td>Logical reasoning</td>
+          <td>+20-40%</td>
+          <td>Puzzles, deduction problems</td>
+        </tr>
+        <tr>
+          <td>Commonsense reasoning</td>
+          <td>+15-25%</td>
+          <td>Physical reasoning, social situations</td>
+        </tr>
+        <tr>
+          <td>Code debugging</td>
+          <td>+20-35%</td>
+          <td>Finding bugs, explaining errors</td>
+        </tr>
+        <tr>
+          <td>Simple factual Q&A</td>
+          <td>+0-5%</td>
+          <td>Not helpful for simple lookup</td>
+        </tr>
+      </tbody>
+    </table>
 
     <h3>Advanced Prompting Patterns</h3>
 
-    <ul>
-      <li><strong>ReAct:</strong> Reasoning + Acting (interleave thought and action)</li>
-      <li><strong>Self-Consistency:</strong> Generate multiple answers, choose most common</li>
-      <li><strong>Tree of Thoughts:</strong> Explore multiple reasoning paths</li>
-      <li><strong>Automatic Prompt Engineering:</strong> Let LLMs optimize prompts</li>
-    </ul>
+    <p><strong>Tree of Thoughts (ToT):</strong> Explore multiple reasoning branches like a search tree</p>
 
-    <h2>Context Window</h2>
+    <pre><code>Process:
+1. Generate multiple next steps (thought branches)
+2. Evaluate each branch's promise
+3. Explore most promising branches further
+4. Backtrack if branch leads to dead end
+5. Find best path to solution
+
+Use case: Creative writing, game playing, complex planning
+Performance: Solves problems impossible with linear CoT
+Cost: 10-100x more compute than standard CoT</code></pre>
+
+    <p><strong>ReAct (Reasoning + Acting):</strong> Interleave thinking with actions/tool use</p>
+
+    <pre><code>Example:
+Thought: I need to find the current temperature in Tokyo
+Action: search("current temperature Tokyo")
+Observation: 18°C, partly cloudy
+Thought: Now I need to compare with New York
+Action: search("current temperature New York")
+Observation: 22°C, sunny
+Thought: New York is warmer
+Answer: New York is 4°C warmer than Tokyo
+
+Benefits:
+• Breaks down complex tasks requiring external information
+• Enables tool use (search, calculator, APIs)
+• Self-corrects based on observations
+• Foundation for AI agents</code></pre>
+
+    <p><strong>Self-Ask:</strong> Model asks and answers sub-questions</p>
+
+    <pre><code>Question: "Who was president when the iPhone was released?"
+
+Model output:
+"Are follow-up questions needed? Yes.
+Follow-up: When was the iPhone released?
+Intermediate answer: June 2007
+Follow-up: Who was US president in June 2007?
+Intermediate answer: George W. Bush
+Final answer: George W. Bush was president when iPhone was released."</code></pre>
+
+    <div class="callout info">
+      <div class="callout-title">💡 Prompting Best Practices (2024)</div>
+      <ul>
+        <li><strong>Start simple:</strong> Try zero-shot before adding examples</li>
+        <li><strong>Add CoT for reasoning:</strong> "Let's think step by step" for complex tasks</li>
+        <li><strong>Use examples strategically:</strong> 2-3 diverse examples often sufficient</li>
+        <li><strong>Be specific:</strong> Clear instructions > vague requests</li>
+        <li><strong>Iterate:</strong> Refine prompts based on outputs</li>
+        <li><strong>Use system prompts:</strong> Set consistent behavior/tone</li>
+        <li><strong>Consider cost:</strong> CoT uses more tokens (balance quality vs. cost)</li>
+      </ul>
+    </div>
+
+    <h2>Context Windows: The Long Context Revolution (2024)</h2>
+
+    <p>Context window size has exploded in 2024, enabling entirely new use cases:</p>
 
     <table>
       <thead>
         <tr>
           <th>Model</th>
           <th>Context Length</th>
-          <th>Notes</th>
+          <th>Equivalent Content</th>
+          <th>Use Cases</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>GPT-3</td>
-          <td>2,048 tokens</td>
+          <td>GPT-3 (2020)</td>
+          <td>2K tokens</td>
           <td>~1,500 words</td>
+          <td>Short conversations</td>
         </tr>
         <tr>
-          <td>GPT-3.5</td>
-          <td>4,096 tokens</td>
-          <td>~3,000 words</td>
+          <td>GPT-3.5 (2022)</td>
+          <td>4K tokens</td>
+          <td>~3K words (~6 pages)</td>
+          <td>Articles, short documents</td>
         </tr>
         <tr>
-          <td>GPT-4</td>
-          <td>8,192 / 32,768 tokens</td>
+          <td>GPT-4 (2023)</td>
+          <td>8K / 32K tokens</td>
           <td>~6K / 24K words</td>
+          <td>Reports, code files</td>
         </tr>
         <tr>
-          <td>GPT-4 Turbo</td>
-          <td>128,000 tokens</td>
-          <td>~96,000 words (~300 pages)</td>
+          <td>GPT-4 Turbo (2023)</td>
+          <td>128K tokens</td>
+          <td>~96K words (~300 pages)</td>
+          <td>Books, large codebases</td>
         </tr>
         <tr>
-          <td>Claude 3</td>
-          <td>200,000 tokens</td>
-          <td>~150,000 words (~500 pages)</td>
+          <td>GPT-4o (2024)</td>
+          <td>128K tokens</td>
+          <td>~96K words</td>
+          <td>Multi-modal long context</td>
         </tr>
         <tr>
-          <td>Gemini 1.5 Pro</td>
-          <td>1,000,000 tokens</td>
-          <td>~750,000 words</td>
+          <td>Claude 3 (2024)</td>
+          <td>200K tokens</td>
+          <td>~150K words (~500 pages)</td>
+          <td>Technical docs, multiple files</td>
+        </tr>
+        <tr>
+          <td>Claude 3.5 (2024)</td>
+          <td>200K tokens</td>
+          <td>~150K words</td>
+          <td>Code analysis, documentation</td>
+        </tr>
+        <tr>
+          <td>Llama 3.1 (2024)</td>
+          <td>128K tokens</td>
+          <td>~96K words</td>
+          <td>Open-source long context</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 1.5 Pro (2024)</strong></td>
+          <td><strong>1-2M tokens</strong></td>
+          <td><strong>~750K-1.5M words</strong></td>
+          <td><strong>Entire codebases, hours of video</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 1.5 Flash (2024)</strong></td>
+          <td><strong>1M tokens</strong></td>
+          <td><strong>~750K words</strong></td>
+          <td><strong>Fast long-context processing</strong></td>
         </tr>
       </tbody>
     </table>
+
+    <h3>What Long Context Enables</h3>
+
+    <p><strong>1M+ tokens unlocks entirely new capabilities:</strong></p>
+
+    <ul>
+      <li><strong>Entire Codebases:</strong> Analyze 10,000+ file repositories in one context</li>
+      <li><strong>Full Books:</strong> Process complete novels, textbooks, technical manuals</li>
+      <li><strong>Video Analysis:</strong> 1 hour of video = ~700K tokens (Gemini multimodal)</li>
+      <li><strong>Multi-Document Reasoning:</strong> Compare/synthesize across dozens of papers</li>
+      <li><strong>Extended Conversations:</strong> Days of chat history without losing context</li>
+      <li><strong>Complex System Understanding:</strong> Map entire software architectures</li>
+    </ul>
+
+    <h3>Technical Challenges Solved</h3>
+
+    <pre><code>Key Innovations Enabling Long Context:
+
+1. Efficient Attention Mechanisms:
+   • Flash Attention: 2-4x faster, less memory
+   • Grouped Query Attention (GQA): Reduces KV cache
+   • Sparse Attention: Attend to relevant tokens only
+
+2. Position Encoding Improvements:
+   • RoPE (Rotary Position Embeddings): Better extrapolation
+   • ALiBi: Attention with Linear Biases
+   • Learned absolute positions with interpolation
+
+3. KV Cache Optimization:
+   • Compression techniques
+   • Quantization (INT8/INT4)
+   • Selective token retention
+
+4. Training Strategies:
+   • Long-context fine-tuning on extended sequences
+   • Curriculum learning (short → long)
+   • Synthetic long-context data generation</code></pre>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Long Context Considerations</div>
+      <p><strong>Challenges remain even with 1M+ context:</strong></p>
+      <ul>
+        <li><strong>"Lost in the Middle":</strong> Models may miss info buried in long contexts</li>
+        <li><strong>Cost:</strong> Longer context = more compute = higher API costs</li>
+        <li><strong>Latency:</strong> Processing 1M tokens takes time (seconds to minutes)</li>
+        <li><strong>Quality varies:</strong> Not all positions attended equally well</li>
+        <li><strong>Retrieval still helps:</strong> RAG can be more efficient than full context</li>
+      </ul>
+      <p><strong>Best practice:</strong> Use long context when needed, but consider retrieval
+      (RAG) for efficiency when dealing with massive knowledge bases.</p>
+    </div>
 
     <h2>Limitations and Challenges</h2>
 

@@ -31,8 +31,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </ul>
 
     <div class="diagram-container">
-      <pre class="mermaid">
-graph LR
+      <pre class="mermaid" set:html={`graph LR
     A[Raw Input<br/>Pixels] --> B[Layer 1<br/>Edges/Lines]
     B --> C[Layer 2<br/>Shapes/Textures]
     C --> D[Layer 3<br/>Object Parts]
@@ -44,8 +43,7 @@ graph LR
     style B fill:#fff3cd
     style C fill:#fff3cd
     style D fill:#fff3cd
-    style E fill:#fff3cd
-      </pre>
+    style E fill:#fff3cd`} />
     </div>
 
     <h2>Neural Network Fundamentals</h2>
@@ -138,8 +136,7 @@ Where:
     <p>The simplest deep learning architecture where information flows in one direction:</p>
 
     <div class="diagram-container">
-      <pre class="mermaid">
-graph LR
+      <pre class="mermaid" set:html={`graph LR
     I1[Input 1] --> H11[Hidden<br/>Layer 1]
     I2[Input 2] --> H11
     I3[Input 3] --> H11
@@ -163,8 +160,7 @@ graph LR
     style I2 fill:#e1f5ff
     style I3 fill:#e1f5ff
     style I4 fill:#e1f5ff
-    style O fill:#d4edda
-      </pre>
+    style O fill:#d4edda`} />
     </div>
 
     <p><strong>Characteristics:</strong></p>
@@ -180,8 +176,7 @@ graph LR
     <p>Specialized for processing grid-like data (images, video, time series):</p>
 
     <div class="diagram-container">
-      <pre class="mermaid">
-graph LR
+      <pre class="mermaid" set:html={`graph LR
     A[Input Image<br/>224×224×3] --> B[Conv Layer<br/>+ ReLU]
     B --> C[Pooling<br/>Layer]
     C --> D[Conv Layer<br/>+ ReLU]
@@ -191,8 +186,7 @@ graph LR
     G --> H[Output<br/>Classes]
     
     style A fill:#e1f5ff
-    style H fill:#d4edda
-      </pre>
+    style H fill:#d4edda`} />
     </div>
 
     <p><strong>Key Components:</strong></p>
@@ -264,8 +258,7 @@ x₁ ───> │RNN│───> │RNN│───> │RNN│───> │R
     <p>Unsupervised networks that learn compressed representations:</p>
 
     <div class="diagram-container">
-      <pre class="mermaid">
-graph LR
+      <pre class="mermaid" set:html={`graph LR
     A[Input<br/>High Dim] --> B[Encoder<br/>Layer 1]
     B --> C[Encoder<br/>Layer 2]
     C --> D[Latent Space<br/>Bottleneck]
@@ -275,8 +268,7 @@ graph LR
     
     style A fill:#e1f5ff
     style D fill:#fff3cd
-    style G fill:#d4edda
-      </pre>
+    style G fill:#d4edda`} />
     </div>
 
     <p><strong>Applications:</strong></p>
@@ -304,16 +296,14 @@ graph LR
     <p>The algorithm that enables training by computing gradients:</p>
 
     <div class="diagram-container">
-      <pre class="mermaid">
-graph RL
+      <pre class="mermaid" set:html={`graph RL
     A[Loss Function<br/>L = f(y, ŷ)] --> B[∂L/∂W₃<br/>Output Gradient]
     B --> C[∂L/∂W₂<br/>Hidden Layer 2]
     C --> D[∂L/∂W₁<br/>Hidden Layer 1]
     D --> E[Update Weights<br/>W := W - η∇W]
     
     style A fill:#ffebee
-    style E fill:#d4edda
-      </pre>
+    style E fill:#d4edda`} />
     </div>
 
     <p><strong>Steps:</strong></p>
@@ -490,8 +480,7 @@ Training Time:                   Test Time:
     <p>Leverage pre-trained models for new tasks:</p>
 
     <div class="diagram-container">
-      <pre class="mermaid">
-graph TB
+      <pre class="mermaid" set:html={`graph TB
     A[Pre-trained Model<br/>ImageNet, 1M images] --> B{Transfer Strategy}
     B --> C[Feature Extraction<br/>Freeze base, train head]
     B --> D[Fine-tuning<br/>Unfreeze & train all]
@@ -504,8 +493,7 @@ graph TB
     style A fill:#e1f5ff
     style F fill:#d4edda
     style G fill:#d4edda
-    style H fill:#d4edda
-      </pre>
+    style H fill:#d4edda`} />
     </div>
 
     <h3>Mixed Precision Training</h3>

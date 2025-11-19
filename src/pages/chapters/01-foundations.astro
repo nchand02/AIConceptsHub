@@ -44,8 +44,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       <li><strong>Problem Solving:</strong> Finding solutions to complex challenges</li>
     </ul>
 
-    <pre class="mermaid">
-mindmap
+    <pre class="mermaid" set:html={`mindmap
   root((Artificial Intelligence))
     Reasoning
       Logic
@@ -66,8 +65,7 @@ mindmap
     Problem Solving
       Search
       Planning
-      Optimization
-      </pre>
+      Optimization`} />
 
     <h3>The Turing Test</h3>
     
@@ -98,8 +96,7 @@ mindmap
 
     <h2>1.2 History of AI</h2>
 
-    <pre class="mermaid">
-timeline
+    <pre class="mermaid" set:html={`timeline
     title Evolution of Artificial Intelligence
     1950s : Birth of AI (Turing Test, Dartmouth Conference)
     1960s : Early Optimism (Expert Systems, ELIZA)
@@ -108,8 +105,7 @@ timeline
     1990s : Statistical Methods Emerge
     2000s : Big Data & Machine Learning
     2010s : Deep Learning Revolution
-    2020s : LLMs & Generative AI Era
-      </pre>
+    2020s : LLMs & Generative AI Era`} />
 
     <h3>Key Milestones</h3>
 
@@ -199,14 +195,14 @@ timeline
       using symbols and rules, manipulating them through logical inference.
     </p>
 
-    <pre><code># Example: Simple rule-based expert system
+    <pre><code>{`# Example: Simple rule-based expert system
 rules = [
     ("IF animal has feathers THEN animal is bird", 0.9),
     ("IF animal is bird AND animal swims THEN animal is waterfowl", 0.95),
     ("IF animal is waterfowl AND animal is white THEN animal is swan", 0.8)
 ]
 
-facts = {{"has feathers": True, "swims": True, "is white": True}}
+facts = {"has feathers": True, "swims": True, "is white": True}
 
 def infer(rules, facts):
     """Simple forward chaining inference"""
@@ -221,7 +217,7 @@ def infer(rules, facts):
                 if conclusion not in inferred:
                     inferred[conclusion] = confidence
                     changed = True
-    return inferred</code></pre>
+    return inferred`}</code></pre>
 
     <div class="callout warning">
       <div class="callout-title">⚠️ Limitations of Symbolic AI</div>
@@ -243,17 +239,15 @@ def infer(rules, facts):
       rules, systems learned patterns from data.
     </p>
 
-    <pre class="mermaid">
-graph LR
+    <pre class="mermaid" set:html={`graph LR
     A[Training Data] --> B[Learning Algorithm]
     B --> C[Statistical Model]
     C --> D[Predictions]
     E[New Data] --> C
-    
+
     style A fill:#3b82f6,stroke:#2563eb,color:#fff
     style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style D fill:#10b981,stroke:#059669,color:#fff
-      </pre>
+    style D fill:#10b981,stroke:#059669,color:#fff`} />
 
     <h3>Connectionist AI (Neural Networks)</h3>
     
@@ -337,7 +331,7 @@ graph LR
       Informed search uses domain knowledge to guide exploration toward promising areas of the search space.
     </p>
 
-    <pre><code>def a_star_search(start, goal, h_func):
+    <pre><code>{`def a_star_search(start, goal, h_func):
     """A* search algorithm
     
     Args:
@@ -350,8 +344,8 @@ graph LR
     """
     frontier = PriorityQueue()
     frontier.put((0, start))
-    came_from = {{start: None}}
-    cost_so_far = {{start: 0}}
+    came_from = {start: None}
+    cost_so_far = {start: 0}
     
     while not frontier.empty():
         current = frontier.get()[1]
@@ -368,7 +362,7 @@ graph LR
                 frontier.put((priority, next_state))
                 came_from[next_state] = current
     
-    return None  # No path found</code></pre>
+    return None  # No path found`}</code></pre>
 
     <div class="collapsible">
       <div class="collapsible-header">
@@ -416,8 +410,7 @@ sibling(X, Y) :- parent(Z, X), parent(Z, Y), X \= Y.
 
     <h3>Semantic Networks</h3>
 
-    <pre class="mermaid">
-graph TD
+    <pre class="mermaid" set:html={`graph TD
     A[Bird] -->|is-a| B[Animal]
     C[Penguin] -->|is-a| A
     D[Tweety] -->|instance-of| C
@@ -426,12 +419,11 @@ graph TD
     C -->|cannot| E
     C -->|can| G[Swim]
     B -->|has| H[Metabolism]
-    
+
     style B fill:#3b82f6
     style A fill:#8b5cf6
     style C fill:#ec4899
-    style D fill:#10b981
-      </pre>
+    style D fill:#10b981`} />
 
     <h3>Frames and Ontologies</h3>
 
@@ -520,8 +512,8 @@ Student:
     </div>
 
     <div class="chapter-navigation">
-      <a href="/" class="btn btn-secondary">← Home</a>
-      <a href="/chapters/02-machine-learning" class="btn btn-primary">Next: Machine Learning →</a>
+      <a href={import.meta.env.BASE_URL} class="btn btn-secondary">← Home</a>
+      <a href={`${import.meta.env.BASE_URL}chapters/02-machine-learning`} class="btn btn-primary">Next: Machine Learning →</a>
     </div>
   </article>
 </BaseLayout>

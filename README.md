@@ -46,8 +46,8 @@ A comprehensive, interactive educational website covering all major concepts in 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/AI_Tutorial_For_Everyone.git
-cd AI_Tutorial_For_Everyone
+git clone https://github.com/nchand02/AIConceptsHub.git
+cd AIConceptsHub
 
 # Install dependencies
 npm install
@@ -154,8 +154,8 @@ Make sure your `astro.config.mjs` has the correct `base` path:
 
 ```javascript
 export default defineConfig({
-  site: 'https://yourusername.github.io',
-  base: '/AI_Tutorial_For_Everyone',  // Replace with your repo name
+  site: 'https://nchand02.github.io',
+  base: '/AIConceptsHub',
 });
 ```
 
@@ -277,8 +277,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/AI_Tutorial_For_Everyone/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/AI_Tutorial_For_Everyone/discussions)
+- **Issues**: [GitHub Issues](https://github.com/nchand02/AIConceptsHub/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/nchand02/AIConceptsHub/discussions)
 
 ## 🗺️ Roadmap
 
@@ -293,4 +293,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for the AI learning community**
 
-For detailed documentation, visit [the wiki](https://github.com/yourusername/AI_Tutorial_For_Everyone/wiki).
+For detailed documentation, visit [the wiki](https://github.com/nchand02/AIConceptsHub/wiki).
