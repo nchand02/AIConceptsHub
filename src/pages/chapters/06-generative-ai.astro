@@ -1,0 +1,596 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Chapter 6: Generative AI"
+  description="Comprehensive guide to Generative AI: Diffusion Models, GANs, VAEs, and Image Generation"
+  currentPage="/chapters/06-generative-ai"
+>
+  <article>
+    <h1>Chapter 6: Generative AI</h1>
+
+    <div class="callout info">
+      <div class="callout-title">📚 Chapter Overview</div>
+      <p>Generative AI creates new content—images, text, audio, video—by learning patterns from training data. This chapter explores the core architectures: GANs, VAEs, and Diffusion Models, focusing on breakthrough systems like Stable Diffusion, DALL-E, and Midjourney.</p>
+    </div>
+
+    <h2>What is Generative AI?</h2>
+
+    <p>Generative AI models learn the underlying probability distribution of training data to generate new, similar samples:</p>
+
+    <ul>
+      <li><strong>Goal:</strong> Generate novel, high-quality samples (images, text, audio)</li>
+      <li><strong>Key Property:</strong> Captures data distribution P(X)</li>
+      <li><strong>Applications:</strong> Art creation, design, data augmentation, content generation</li>
+      <li><strong>Challenge:</strong> Balance between quality, diversity, and controllability</li>
+    </ul>
+
+    <h2>Three Major Architectures</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Architecture</th>
+          <th>Key Idea</th>
+          <th>Strengths</th>
+          <th>Examples</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>GANs</strong><br>(Generative Adversarial Networks)</td>
+          <td>Two networks compete: Generator vs Discriminator</td>
+          <td>Sharp, realistic images; Fast sampling</td>
+          <td>StyleGAN, CycleGAN, NVIDIA GauGAN</td>
+        </tr>
+        <tr>
+          <td><strong>VAEs</strong><br>(Variational Autoencoders)</td>
+          <td>Encode to latent space, decode to reconstruct</td>
+          <td>Stable training; Smooth latent space; Probabilistic</td>
+          <td>Deep Learning compression, anomaly detection</td>
+        </tr>
+        <tr>
+          <td><strong>Diffusion Models</strong></td>
+          <td>Learn to reverse gradual noise addition process</td>
+          <td>High quality; Stable training; Mode coverage</td>
+          <td>Stable Diffusion, DALL-E 2/3, Imagen, Midjourney</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>1. Generative Adversarial Networks (GANs)</h2>
+
+    <h3>Core Concept (Goodfellow et al., 2014)</h3>
+
+    <p>Two neural networks play a minimax game:</p>
+
+    <pre><code>┌─────────────────────────────────────────┐
+│         GAN Architecture                │
+├─────────────────────────────────────────┤
+│                                         │
+│  Random Noise z  ──→  [Generator G]    │
+│                           ↓             │
+│                    Fake Image           │
+│                           ↓             │
+│  Real Images ──┐          ↓             │
+│                ↓          ↓             │
+│           [Discriminator D]             │
+│                ↓                        │
+│          "Real" or "Fake"?              │
+│                                         │
+│  Training:                              │
+│  • D tries to distinguish real vs fake  │
+│  • G tries to fool D                    │
+│  • Adversarial equilibrium              │
+└─────────────────────────────────────────┘
+
+Mathematical Objective:
+min_G max_D V(D,G) = E[log D(x)] + E[log(1 - D(G(z)))]
+
+Where:
+- D(x) = Discriminator's probability that x is real
+- G(z) = Generator's output from noise z
+- Goal: G generates images D can't distinguish from real</code></pre>
+
+    <h3>Training Process</h3>
+
+    <pre><code class="language-python"># Simplified GAN Training Loop
+for epoch in epochs:
+    # 1. Train Discriminator
+    real_images = get_real_batch()
+    fake_images = generator(random_noise())
+
+    d_loss_real = -log(discriminator(real_images))
+    d_loss_fake = -log(1 - discriminator(fake_images))
+    d_loss = d_loss_real + d_loss_fake
+
+    update_discriminator(d_loss)
+
+    # 2. Train Generator
+    fake_images = generator(random_noise())
+    g_loss = -log(discriminator(fake_images))  # Want D to think it's real
+
+    update_generator(g_loss)</code></pre>
+
+    <h3>Major GAN Variants</h3>
+
+    <ul>
+      <li><strong>DCGAN (2015):</strong> Deep Convolutional GAN - architectural guidelines
+        <ul>
+          <li>Replace pooling with strided convolutions</li>
+          <li>Use BatchNorm in both G and D</li>
+          <li>Remove fully connected layers</li>
+          <li>Use ReLU in G, LeakyReLU in D</li>
+        </ul>
+      </li>
+      <li><strong>StyleGAN (2018) / StyleGAN2 (2019):</strong> NVIDIA's breakthrough
+        <ul>
+          <li>Style-based generator architecture</li>
+          <li>Controls image features at different scales</li>
+          <li>Photorealistic face generation (thispersondoesnotexist.com)</li>
+          <li>Disentangled latent space for editing</li>
+        </ul>
+      </li>
+      <li><strong>CycleGAN (2017):</strong> Unpaired image-to-image translation
+        <ul>
+          <li>Horse ↔ Zebra, Summer ↔ Winter, Photo ↔ Painting</li>
+          <li>No paired training data needed</li>
+          <li>Cycle consistency loss ensures reversibility</li>
+        </ul>
+      </li>
+      <li><strong>Conditional GAN (cGAN):</strong> Control generation with labels/conditions</li>
+    </ul>
+
+    <h3>GAN Challenges</h3>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Known Issues</div>
+      <ul>
+        <li><strong>Mode Collapse:</strong> Generator produces limited variety</li>
+        <li><strong>Training Instability:</strong> Difficult to balance G and D</li>
+        <li><strong>Vanishing Gradients:</strong> If D is too strong, G can't learn</li>
+        <li><strong>Evaluation Difficulty:</strong> No single metric for quality</li>
+      </ul>
+      <p><strong>Solutions:</strong> Wasserstein GAN, Progressive Growing, Spectral Normalization</p>
+    </div>
+
+    <h2>2. Variational Autoencoders (VAEs)</h2>
+
+    <h3>Core Concept (Kingma & Welling, 2013)</h3>
+
+    <p>VAEs learn a probabilistic mapping between data and a latent space:</p>
+
+    <pre><code>┌──────────────────────────────────────────┐
+│      VAE Architecture                    │
+├──────────────────────────────────────────┤
+│                                          │
+│  Input x ──→ [Encoder q(z|x)]           │
+│                   ↓                      │
+│              μ (mean), σ (std)           │
+│                   ↓                      │
+│              Sampling z ~ N(μ, σ²)       │
+│                   ↓                      │
+│            [Decoder p(x|z)]              │
+│                   ↓                      │
+│            Reconstructed x'              │
+│                                          │
+│  Loss = Reconstruction + KL Divergence   │
+└──────────────────────────────────────────┘
+
+Key Properties:
+• Encoder outputs distribution parameters (μ, σ)
+• Reparameterization trick: z = μ + σ * ε, ε ~ N(0,1)
+• Latent space is continuous and structured
+• Can generate by sampling from p(z)</code></pre>
+
+    <h3>VAE Loss Function</h3>
+
+    <pre><code>Loss = Reconstruction Loss + KL Divergence
+
+L(x, x') = ||x - x'||² + KL(q(z|x) || p(z))
+
+Where:
+• Reconstruction Loss: How well decoder reconstructs input
+• KL Divergence: Regularizes latent space to be close to N(0, I)
+• Balance between faithful reconstruction and structured latent space</code></pre>
+
+    <h3>VAE vs GAN</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>VAE</th>
+          <th>GAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Training</strong></td>
+          <td>Stable, principled optimization</td>
+          <td>Adversarial, can be unstable</td>
+        </tr>
+        <tr>
+          <td><strong>Output Quality</strong></td>
+          <td>Often blurry</td>
+          <td>Sharp, realistic</td>
+        </tr>
+        <tr>
+          <td><strong>Latent Space</strong></td>
+          <td>Structured, smooth interpolation</td>
+          <td>Less structured</td>
+        </tr>
+        <tr>
+          <td><strong>Diversity</strong></td>
+          <td>Good mode coverage</td>
+          <td>Prone to mode collapse</td>
+        </tr>
+        <tr>
+          <td><strong>Use Cases</strong></td>
+          <td>Compression, anomaly detection</td>
+          <td>High-quality image synthesis</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. Diffusion Models (2015-2024)</h2>
+
+    <h3>The Current State-of-the-Art</h3>
+
+    <p>Diffusion models have become the dominant approach for high-quality image generation, powering Stable Diffusion, DALL-E 2/3, Imagen, and Midjourney.</p>
+
+    <h3>Core Concept</h3>
+
+    <p>Learn to reverse a gradual noising process:</p>
+
+    <pre><code>Forward Process (Fixed):
+Clean Image x₀ → + noise → x₁ → + noise → ... → xₜ → Pure Noise
+
+Reverse Process (Learned):
+Pure Noise → denoise → xₜ₋₁ → denoise → ... → x₁ → x₀ Clean Image
+
+Training:
+1. Take clean image x₀
+2. Sample timestep t
+3. Add noise: xₜ = √(ᾱₜ)x₀ + √(1-ᾱₜ)ε, where ε ~ N(0,I)
+4. Train neural network to predict the noise ε
+5. Loss = ||ε - ε_θ(xₜ, t)||²
+
+Generation:
+1. Start with pure noise xₜ
+2. Iteratively denoise using learned model
+3. After T steps, obtain clean image x₀</code></pre>
+
+    <h3>Key Advantages</h3>
+
+    <ul>
+      <li><strong>Quality:</strong> State-of-the-art image fidelity</li>
+      <li><strong>Stability:</strong> No adversarial training, stable convergence</li>
+      <li><strong>Mode Coverage:</strong> Captures full data distribution</li>
+      <li><strong>Controllability:</strong> Easy to add conditioning (text, class labels)</li>
+      <li><strong>Scalability:</strong> Scales to high-resolution images</li>
+    </ul>
+
+    <h3>Latent Diffusion Models (Stable Diffusion)</h3>
+
+    <p>Breakthrough: Perform diffusion in compressed latent space (Rombach et al., 2022)</p>
+
+    <pre><code>┌──────────────────────────────────────────────────┐
+│    Latent Diffusion Model Architecture           │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│  Text Prompt ──→ [CLIP Text Encoder]            │
+│                         ↓                        │
+│                  Text Embeddings                 │
+│                         ↓                        │
+│  Random Noise ──→ [U-Net Denoiser] ←─ Timestep │
+│     (latent)          ↓ (cross-attention)        │
+│                   Denoised Latent                │
+│                         ↓                        │
+│                  [VAE Decoder]                   │
+│                         ↓                        │
+│                   Final Image                    │
+│                                                  │
+│  Key Innovation: Diffusion in 64x smaller space  │
+│  • 512x512 image → 64x64 latent                 │
+│  • 8x faster than pixel-space diffusion         │
+│  • Enables consumer GPU generation              │
+└──────────────────────────────────────────────────┘</code></pre>
+
+    <h3>Major Diffusion-Based Systems (2024)</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>System</th>
+          <th>Release</th>
+          <th>Key Features</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>DALL-E 2</strong></td>
+          <td>2022</td>
+          <td>OpenAI's text-to-image; CLIP guidance; inpainting/outpainting</td>
+        </tr>
+        <tr>
+          <td><strong>Stable Diffusion</strong></td>
+          <td>2022</td>
+          <td>Open source; latent diffusion; runs on consumer GPUs; highly customizable</td>
+        </tr>
+        <tr>
+          <td><strong>Midjourney</strong></td>
+          <td>2022</td>
+          <td>Artistic style; Discord-based; very high aesthetic quality</td>
+        </tr>
+        <tr>
+          <td><strong>Imagen</strong></td>
+          <td>2022</td>
+          <td>Google; cascaded diffusion; photorealistic outputs</td>
+        </tr>
+        <tr>
+          <td><strong>DALL-E 3</strong></td>
+          <td>2023</td>
+          <td>Improved prompt following; integrated with ChatGPT; better text rendering</td>
+        </tr>
+        <tr>
+          <td><strong>Stable Diffusion XL</strong></td>
+          <td>2023</td>
+          <td>1024x1024 native resolution; improved composition; better hands/faces</td>
+        </tr>
+        <tr>
+          <td><strong>FLUX</strong></td>
+          <td>2024</td>
+          <td>Black Forest Labs (Stable Diffusion team); text rendering; photorealism</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Text-to-Image Generation Pipeline</h2>
+
+    <h3>How Text Prompts Control Generation</h3>
+
+    <pre><code>1. Text Encoding:
+   "A cat wearing a hat" → CLIP Text Encoder → Text Embeddings
+
+2. Cross-Attention Conditioning:
+   U-Net denoiser uses cross-attention to align image features with text
+
+   For each U-Net layer:
+   Q (queries) = image features
+   K, V (keys, values) = text embeddings
+   Attention(Q, K, V) = softmax(QK^T / √d) V
+
+3. Iterative Denoising:
+   Start with noise, gradually denoise guided by text embeddings
+
+4. CFG (Classifier-Free Guidance):
+   noise_pred = noise_unconditional + scale * (noise_conditional - noise_unconditional)
+
+   • Higher scale = stronger text adherence
+   • Lower scale = more creativity
+   • Typical: scale = 7-15</code></pre>
+
+    <h3>Advanced Techniques</h3>
+
+    <ul>
+      <li><strong>ControlNet (2023):</strong> Spatial control via edge maps, poses, depth
+        <ul>
+          <li>Add conditioning inputs (Canny edges, OpenPose skeletons)</li>
+          <li>Fine-grained control over composition</li>
+          <li>Compatible with any Stable Diffusion model</li>
+        </ul>
+      </li>
+      <li><strong>LoRA (Low-Rank Adaptation):</strong> Lightweight fine-tuning
+        <ul>
+          <li>Train only small adapter layers (~5-100MB)</li>
+          <li>Learn specific styles, characters, concepts</li>
+          <li>Mix multiple LoRAs for combined effects</li>
+        </ul>
+      </li>
+      <li><strong>Inpainting/Outpainting:</strong> Edit specific regions
+        <ul>
+          <li>Masked region generation</li>
+          <li>Seamless blending with original</li>
+          <li>Extend images beyond borders</li>
+        </ul>
+      </li>
+      <li><strong>Image-to-Image:</strong> Transform existing images
+        <ul>
+          <li>Start from encoded image + noise</li>
+          <li>Control transformation strength (0-1)</li>
+          <li>Style transfer, variations, modifications</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>Prompt Engineering for Image Generation</h2>
+
+    <h3>Effective Prompt Structure</h3>
+
+    <pre><code>Good Prompt Template:
+[Subject] [Action/Pose] [Setting/Environment] [Style] [Lighting] [Quality Modifiers]
+
+Examples:
+
+Basic:
+"A cat"
+
+Improved:
+"A fluffy orange cat, sitting on a windowsill, looking outside,
+golden hour lighting, photorealistic, 8k, detailed fur"
+
+Advanced:
+"Portrait of a cyberpunk samurai, neon-lit Tokyo street background,
+rain-soaked pavement reflections, cinematic lighting, by Artgerm and
+Greg Rutkowski, trending on ArtStation, highly detailed, 8k"</code></pre>
+
+    <h3>Common Modifiers</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Examples</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Style</strong></td>
+          <td>photorealistic, oil painting, watercolor, anime, 3D render, pixel art</td>
+        </tr>
+        <tr>
+          <td><strong>Quality</strong></td>
+          <td>8k, 4k, highly detailed, sharp focus, masterpiece</td>
+        </tr>
+        <tr>
+          <td><strong>Lighting</strong></td>
+          <td>golden hour, studio lighting, dramatic lighting, soft lighting</td>
+        </tr>
+        <tr>
+          <td><strong>Artists</strong></td>
+          <td>by Greg Rutkowski, in the style of Studio Ghibli</td>
+        </tr>
+        <tr>
+          <td><strong>Camera</strong></td>
+          <td>wide angle, close-up, portrait, aerial view, fisheye</td>
+        </tr>
+        <tr>
+          <td><strong>Negative</strong></td>
+          <td>blurry, distorted, low quality, watermark, text (avoid these)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Evaluation Metrics</h2>
+
+    <ul>
+      <li><strong>FID (Fréchet Inception Distance):</strong> Measures distribution similarity
+        <ul>
+          <li>Lower is better (0 = identical distributions)</li>
+          <li>Most common metric for generative models</li>
+        </ul>
+      </li>
+      <li><strong>IS (Inception Score):</strong> Quality and diversity
+        <ul>
+          <li>Higher is better</li>
+          <li>Can be gamed, less reliable</li>
+        </ul>
+      </li>
+      <li><strong>CLIP Score:</strong> Text-image alignment
+        <ul>
+          <li>Measures how well image matches text prompt</li>
+          <li>Essential for text-to-image models</li>
+        </ul>
+      </li>
+      <li><strong>Human Evaluation:</strong> Still the gold standard
+        <ul>
+          <li>Aesthetic quality, prompt adherence, artifacts</li>
+          <li>User studies, A/B testing</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>Practical Applications</h2>
+
+    <div class="callout success">
+      <div class="callout-title">✅ Real-World Use Cases</div>
+      <ul>
+        <li><strong>Creative Design:</strong> Concept art, illustrations, marketing materials</li>
+        <li><strong>Content Creation:</strong> Social media, blogs, presentations</li>
+        <li><strong>Product Visualization:</strong> E-commerce, prototyping</li>
+        <li><strong>Education:</strong> Visual aids, historical reconstructions</li>
+        <li><strong>Entertainment:</strong> Game assets, storyboarding, film pre-production</li>
+        <li><strong>Data Augmentation:</strong> Training data for ML models</li>
+        <li><strong>Accessibility:</strong> Generating images for descriptions</li>
+      </ul>
+    </div>
+
+    <h2>Ethical Considerations</h2>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Important Concerns</div>
+      <ul>
+        <li><strong>Copyright & Attribution:</strong> Training on copyrighted works, artist consent</li>
+        <li><strong>Deepfakes:</strong> Potential for misinformation, identity theft</li>
+        <li><strong>Bias:</strong> Perpetuating stereotypes from training data</li>
+        <li><strong>Job Displacement:</strong> Impact on illustrators, designers</li>
+        <li><strong>Content Moderation:</strong> Preventing harmful content generation</li>
+        <li><strong>Transparency:</strong> Disclosing AI-generated content</li>
+      </ul>
+      <p><strong>Best Practices:</strong> Use responsibly, respect copyrights, disclose AI usage, be aware of limitations</p>
+    </div>
+
+    <h2>Getting Started with Stable Diffusion</h2>
+
+    <pre><code class="language-python"># Using Hugging Face Diffusers library
+from diffusers import StableDiffusionPipeline
+import torch
+
+# Load model
+pipe = StableDiffusionPipeline.from_pretrained(
+    "stabilityai/stable-diffusion-2-1",
+    torch_dtype=torch.float16
+).to("cuda")
+
+# Generate image
+prompt = "A beautiful sunset over mountains, oil painting style"
+negative_prompt = "blurry, distorted, low quality"
+
+image = pipe(
+    prompt=prompt,
+    negative_prompt=negative_prompt,
+    num_inference_steps=50,  # More steps = higher quality
+    guidance_scale=7.5,       # How strongly to follow prompt
+    height=512,
+    width=512
+).images[0]
+
+image.save("output.png")</code></pre>
+
+    <h2>Future Directions</h2>
+
+    <ul>
+      <li><strong>Video Generation:</strong> Stable Video Diffusion, Runway Gen-2, Pika</li>
+      <li><strong>3D Generation:</strong> Point-E, Shap-E, DreamFusion</li>
+      <li><strong>Faster Inference:</strong> LCM (Latent Consistency Models), SDXL Turbo</li>
+      <li><strong>Better Control:</strong> More precise editing, layout control</li>
+      <li><strong>Personalization:</strong> Few-shot customization to user preferences</li>
+      <li><strong>Unified Models:</strong> Single model for text, image, audio, video</li>
+    </ul>
+
+    <h2>Summary</h2>
+
+    <div class="callout info">
+      <div class="callout-title">📝 Key Takeaways</div>
+      <ul>
+        <li>Three major approaches: GANs (adversarial), VAEs (probabilistic), Diffusion (denoising)</li>
+        <li>Diffusion models dominate current state-of-the-art (Stable Diffusion, DALL-E, Midjourney)</li>
+        <li>Latent diffusion enables efficient generation on consumer hardware</li>
+        <li>Text conditioning via CLIP enables powerful text-to-image generation</li>
+        <li>Advanced techniques: ControlNet, LoRA, inpainting for fine-grained control</li>
+        <li>Prompt engineering is crucial for quality outputs</li>
+        <li>Ethical considerations: copyright, bias, deepfakes, responsible use</li>
+      </ul>
+    </div>
+
+    <h2>Key Papers & Resources</h2>
+
+    <ul>
+      <li>Goodfellow et al. (2014). "Generative Adversarial Networks" - Original GAN paper</li>
+      <li>Kingma & Welling (2013). "Auto-Encoding Variational Bayes" - VAE paper</li>
+      <li>Ho et al. (2020). "Denoising Diffusion Probabilistic Models" - DDPM</li>
+      <li>Rombach et al. (2022). "High-Resolution Image Synthesis with Latent Diffusion Models" - Stable Diffusion</li>
+      <li>Ramesh et al. (2022). "Hierarchical Text-Conditional Image Generation with CLIP Latents" - DALL-E 2</li>
+      <li>Saharia et al. (2022). "Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding" - Imagen</li>
+      <li>Zhang & Agrawala (2023). "Adding Conditional Control to Text-to-Image Diffusion Models" - ControlNet</li>
+    </ul>
+
+    <div class="navigation-buttons">
+      <a href={`${import.meta.env.BASE_URL}chapters/05-llms`} class="btn btn-secondary">← Previous: LLMs</a>
+      <a href={`${import.meta.env.BASE_URL}chapters/07-embeddings`} class="btn btn-primary">Next: Embeddings & Vector DBs →</a>
+    </div>
+  </article>
+</BaseLayout>
+

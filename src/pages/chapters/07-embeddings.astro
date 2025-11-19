@@ -1,0 +1,811 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Chapter 7: Embeddings & Vector Databases"
+  description="Comprehensive guide to Embeddings, Vector Databases, and Semantic Search"
+  currentPage="/chapters/07-embeddings"
+>
+  <article>
+    <h1>Chapter 7: Embeddings & Vector Databases</h1>
+
+    <div class="callout info">
+      <div class="callout-title">📚 Chapter Overview</div>
+      <p>Embeddings transform text, images, and other data into dense numerical vectors that capture semantic meaning. Vector databases enable efficient similarity search at scale, powering modern semantic search, recommendation systems, and RAG applications.</p>
+    </div>
+
+    <h2>What are Embeddings?</h2>
+
+    <p>Embeddings are dense vector representations of data that capture semantic relationships:</p>
+
+    <pre><code>Traditional (Sparse) Representation:
+"cat" → [0, 0, 0, 1, 0, 0, ..., 0]  (one-hot: 10,000+ dimensions)
+
+Embedding (Dense) Representation:
+"cat" → [0.24, -0.18, 0.53, ..., -0.31]  (768 dimensions)
+"dog" → [0.26, -0.15, 0.49, ..., -0.28]  (similar to cat!)
+"car" → [-0.52, 0.31, -0.18, ..., 0.44]  (different from cat)
+
+Key Properties:
+• Dense, low-dimensional (typically 384-1536 dimensions)
+• Semantically similar items have similar vectors
+• Can measure similarity via cosine similarity or dot product
+• Learned from data, not hand-crafted</code></pre>
+
+    <h3>Why Embeddings Matter</h3>
+
+    <ul>
+      <li><strong>Semantic Understanding:</strong> Capture meaning, not just keywords</li>
+      <li><strong>Similarity Search:</strong> Find "cat" when searching "kitten"</li>
+      <li><strong>Cross-modal:</strong> Text, images, audio in same space (CLIP)</li>
+      <li><strong>Transfer Learning:</strong> Pre-trained embeddings work across domains</li>
+      <li><strong>Efficient Computation:</strong> Vector operations are fast</li>
+    </ul>
+
+    <h2>Types of Embeddings</h2>
+
+    <h3>1. Word Embeddings (Historical)</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Year</th>
+          <th>Dimensions</th>
+          <th>Key Feature</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Word2Vec</strong></td>
+          <td>2013</td>
+          <td>300</td>
+          <td>Skip-gram, CBOW; king - man + woman ≈ queen</td>
+        </tr>
+        <tr>
+          <td><strong>GloVe</strong></td>
+          <td>2014</td>
+          <td>300</td>
+          <td>Global word co-occurrence statistics</td>
+        </tr>
+        <tr>
+          <td><strong>FastText</strong></td>
+          <td>2017</td>
+          <td>300</td>
+          <td>Subword embeddings, handles OOV words</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Limitation:</strong> Each word has single static embedding (no context)</p>
+
+    <h3>2. Contextual Embeddings (Modern)</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Year</th>
+          <th>Dimensions</th>
+          <th>Key Feature</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>BERT</strong></td>
+          <td>2018</td>
+          <td>768-1024</td>
+          <td>Bidirectional context, token-level</td>
+        </tr>
+        <tr>
+          <td><strong>Sentence-BERT</strong></td>
+          <td>2019</td>
+          <td>384-768</td>
+          <td>Sentence-level embeddings, siamese network</td>
+        </tr>
+        <tr>
+          <td><strong>text-embedding-ada-002</strong></td>
+          <td>2022</td>
+          <td>1536</td>
+          <td>OpenAI's production embedding model</td>
+        </tr>
+        <tr>
+          <td><strong>text-embedding-3-small</strong></td>
+          <td>2024</td>
+          <td>512-1536</td>
+          <td>OpenAI's latest, matryoshka embeddings</td>
+        </tr>
+        <tr>
+          <td><strong>text-embedding-3-large</strong></td>
+          <td>2024</td>
+          <td>256-3072</td>
+          <td>Highest quality, configurable dimensions</td>
+        </tr>
+        <tr>
+          <td><strong>E5-large-v2</strong></td>
+          <td>2023</td>
+          <td>1024</td>
+          <td>Microsoft, top MTEB benchmark</td>
+        </tr>
+        <tr>
+          <td><strong>BGE-large-en-v1.5</strong></td>
+          <td>2023</td>
+          <td>1024</td>
+          <td>BAAI, excellent for retrieval</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3. Multimodal Embeddings</h3>
+
+    <ul>
+      <li><strong>CLIP (2021):</strong> Joint text-image embeddings
+        <ul>
+          <li>512 dimensions for both text and images</li>
+          <li>Zero-shot image classification</li>
+          <li>Image-text similarity search</li>
+        </ul>
+      </li>
+      <li><strong>ImageBind (2023):</strong> Meta's 6-modality embeddings
+        <ul>
+          <li>Text, image, audio, video, IMU, thermal</li>
+          <li>Unified embedding space</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>Embedding Models Deep Dive</h2>
+
+    <h3>OpenAI's text-embedding Models (2024)</h3>
+
+    <pre><code class="language-python"># Using OpenAI embeddings
+from openai import OpenAI
+
+client = OpenAI(api_key="your-api-key")
+
+# Get embeddings
+response = client.embeddings.create(
+    model="text-embedding-3-small",
+    input="The quick brown fox jumps over the lazy dog"
+)
+
+embedding = response.data[0].embedding  # List of 1536 floats
+print(f"Embedding shape: {len(embedding)}")
+# Output: Embedding shape: 1536
+
+# Batch processing (up to 2048 inputs)
+texts = ["First text", "Second text", "Third text"]
+response = client.embeddings.create(
+    model="text-embedding-3-small",
+    input=texts
+)
+
+embeddings = [data.embedding for data in response.data]</code></pre>
+
+    <h3>Model Comparison (2024)</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Dimensions</th>
+          <th>MTEB Score</th>
+          <th>Cost (per 1M tokens)</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>text-embedding-3-small</strong></td>
+          <td>1536</td>
+          <td>62.3%</td>
+          <td>$0.02</td>
+          <td>Cost-effective, fast</td>
+        </tr>
+        <tr>
+          <td><strong>text-embedding-3-large</strong></td>
+          <td>3072</td>
+          <td>64.6%</td>
+          <td>$0.13</td>
+          <td>Highest accuracy</td>
+        </tr>
+        <tr>
+          <td><strong>text-embedding-ada-002</strong></td>
+          <td>1536</td>
+          <td>61.0%</td>
+          <td>$0.10</td>
+          <td>Legacy, still good</td>
+        </tr>
+        <tr>
+          <td><strong>Sentence-Transformers</strong></td>
+          <td>384-1024</td>
+          <td>Varies</td>
+          <td>Free (self-host)</td>
+          <td>Open source, local</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><em>MTEB = Massive Text Embedding Benchmark (average across 56 datasets)</em></p>
+
+    <h3>Sentence-Transformers (Open Source)</h3>
+
+    <pre><code class="language-python"># Using Sentence-Transformers (HuggingFace)
+from sentence_transformers import SentenceTransformer
+
+# Load model
+model = SentenceTransformer('all-MiniLM-L6-v2')  # 384 dimensions
+
+# Encode sentences
+sentences = [
+    "The cat sits on the mat",
+    "A feline rests on a rug",
+    "The weather is sunny today"
+]
+
+embeddings = model.encode(sentences)
+print(embeddings.shape)  # (3, 384)
+
+# Compute similarity
+from sklearn.metrics.pairwise import cosine_similarity
+similarities = cosine_similarity(embeddings)
+print(similarities[0, 1])  # Cat vs feline: ~0.82 (high similarity)
+print(similarities[0, 2])  # Cat vs weather: ~0.12 (low similarity)</code></pre>
+
+    <h3>Popular Sentence-Transformer Models</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Dimensions</th>
+          <th>Speed</th>
+          <th>Quality</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>all-MiniLM-L6-v2</strong></td>
+          <td>384</td>
+          <td>Fast</td>
+          <td>Good</td>
+        </tr>
+        <tr>
+          <td><strong>all-mpnet-base-v2</strong></td>
+          <td>768</td>
+          <td>Medium</td>
+          <td>Better</td>
+        </tr>
+        <tr>
+          <td><strong>all-MiniLM-L12-v2</strong></td>
+          <td>384</td>
+          <td>Medium</td>
+          <td>Good+</td>
+        </tr>
+        <tr>
+          <td><strong>paraphrase-multilingual</strong></td>
+          <td>768</td>
+          <td>Medium</td>
+          <td>Good (50+ languages)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Similarity Metrics</h2>
+
+    <h3>Cosine Similarity (Most Common)</h3>
+
+    <pre><code>cosine_sim(A, B) = (A · B) / (||A|| * ||B||)
+
+Range: [-1, 1]
+• 1 = identical direction
+• 0 = orthogonal (unrelated)
+• -1 = opposite direction
+
+Example:
+A = [1, 2, 3]
+B = [2, 4, 6]  # Scaled version of A
+cosine_sim(A, B) = 1.0  # Perfect similarity
+
+Why use it?
+• Scale-invariant (magnitude doesn't matter)
+• Works well for high-dimensional vectors
+• Industry standard for text embeddings</code></pre>
+
+    <h3>Other Similarity Metrics</h3>
+
+    <ul>
+      <li><strong>Euclidean Distance (L2):</strong> Straight-line distance
+        <ul>
+          <li>d(A, B) = sqrt(Σ(Aᵢ - Bᵢ)²)</li>
+          <li>Lower is more similar</li>
+          <li>Sensitive to magnitude</li>
+        </ul>
+      </li>
+      <li><strong>Dot Product:</strong> A · B = Σ(Aᵢ * Bᵢ)
+        <ul>
+          <li>Higher is more similar</li>
+          <li>Fast to compute</li>
+          <li>Used if embeddings are normalized</li>
+        </ul>
+      </li>
+      <li><strong>Manhattan Distance (L1):</strong> Sum of absolute differences
+        <ul>
+          <li>d(A, B) = Σ|Aᵢ - Bᵢ|</li>
+          <li>Less common for embeddings</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>Vector Databases</h2>
+
+    <p>Specialized databases optimized for storing and querying high-dimensional vectors at scale:</p>
+
+    <h3>Why Not Use Traditional Databases?</h3>
+
+    <pre><code>Challenge: Find k-nearest neighbors in high dimensions
+
+Naive approach (compare to all vectors):
+• 1M vectors * 1536 dimensions = 1.5B comparisons per query
+• O(n) complexity - doesn't scale
+
+Vector DB approach:
+• Approximate Nearest Neighbor (ANN) algorithms
+• O(log n) or O(√n) complexity
+• 10-100x faster with 95%+ accuracy</code></pre>
+
+    <h3>Major Vector Databases (2024)</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Database</th>
+          <th>Type</th>
+          <th>Key Features</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Pinecone</strong></td>
+          <td>Managed</td>
+          <td>Fully managed, auto-scaling, real-time updates</td>
+          <td>Production, ease of use</td>
+        </tr>
+        <tr>
+          <td><strong>Weaviate</strong></td>
+          <td>Open Source</td>
+          <td>GraphQL, multi-modal, hybrid search</td>
+          <td>Self-hosting, flexibility</td>
+        </tr>
+        <tr>
+          <td><strong>Qdrant</strong></td>
+          <td>Open Source</td>
+          <td>Rust-based, filtering, quantization</td>
+          <td>Performance, self-hosting</td>
+        </tr>
+        <tr>
+          <td><strong>Milvus</strong></td>
+          <td>Open Source</td>
+          <td>Highly scalable, GPU support, cloud-native</td>
+          <td>Enterprise, scale</td>
+        </tr>
+        <tr>
+          <td><strong>Chroma</strong></td>
+          <td>Open Source</td>
+          <td>Lightweight, Python-first, LangChain integration</td>
+          <td>Development, prototyping</td>
+        </tr>
+        <tr>
+          <td><strong>pgvector</strong></td>
+          <td>Extension</td>
+          <td>PostgreSQL extension, SQL queries</td>
+          <td>Existing Postgres users</td>
+        </tr>
+        <tr>
+          <td><strong>FAISS</strong></td>
+          <td>Library</td>
+          <td>Meta's library, extremely fast, in-memory</td>
+          <td>Research, local experiments</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Pinecone Example (Managed Service)</h3>
+
+    <pre><code class="language-python"># Pinecone - Managed vector database
+import pinecone
+
+# Initialize
+pinecone.init(api_key="your-api-key", environment="us-west1-gcp")
+
+# Create index
+pinecone.create_index(
+    name="my-index",
+    dimension=1536,  # Must match embedding dimension
+    metric="cosine"   # cosine, euclidean, or dotproduct
+)
+
+# Connect to index
+index = pinecone.Index("my-index")
+
+# Upsert vectors
+vectors = [
+    ("doc1", [0.1, 0.2, ...], {"text": "First document"}),
+    ("doc2", [0.3, 0.4, ...], {"text": "Second document"}),
+]
+index.upsert(vectors=vectors)
+
+# Query (find similar)
+query_vector = [0.15, 0.25, ...]  # Your query embedding
+results = index.query(
+    vector=query_vector,
+    top_k=5,           # Return top 5 matches
+    include_metadata=True
+)
+
+for match in results['matches']:
+    print(f"ID: {match['id']}, Score: {match['score']}")
+    print(f"Text: {match['metadata']['text']}")</code></pre>
+
+    <h3>Weaviate Example (Open Source)</h3>
+
+    <pre><code class="language-python"># Weaviate - Open source vector database
+import weaviate
+
+# Connect to Weaviate
+client = weaviate.Client("http://localhost:8080")
+
+# Create schema
+schema = {
+    "class": "Document",
+    "vectorizer": "text2vec-openai",  # Or use custom embeddings
+    "properties": [
+        {"name": "text", "dataType": ["text"]},
+        {"name": "category", "dataType": ["string"]},
+    ]
+}
+client.schema.create_class(schema)
+
+# Add objects (auto-vectorizes with text2vec-openai)
+client.data_object.create(
+    class_name="Document",
+    data_object={
+        "text": "AI is transforming technology",
+        "category": "tech"
+    }
+)
+
+# Semantic search
+result = client.query.get(
+    "Document", ["text", "category"]
+).with_near_text({
+    "concepts": ["artificial intelligence"]
+}).with_limit(5).do()
+
+print(result)</code></pre>
+
+    <h3>Chroma Example (Lightweight, Python-First)</h3>
+
+    <pre><code class="language-python"># Chroma - Lightweight, easy to use
+import chromadb
+
+# Create client
+client = chromadb.Client()
+
+# Create collection
+collection = client.create_collection(name="my_docs")
+
+# Add documents (auto-generates embeddings)
+collection.add(
+    documents=[
+        "The cat sits on the mat",
+        "A dog plays in the park",
+        "Machine learning is fascinating"
+    ],
+    metadatas=[
+        {"source": "book1"},
+        {"source": "book2"},
+        {"source": "article"}
+    ],
+    ids=["id1", "id2", "id3"]
+)
+
+# Query
+results = collection.query(
+    query_texts=["Tell me about animals"],
+    n_results=2
+)
+
+print(results['documents'])
+print(results['distances'])</code></pre>
+
+    <h2>Approximate Nearest Neighbor (ANN) Algorithms</h2>
+
+    <h3>How Vector DBs Scale</h3>
+
+    <pre><code>1. HNSW (Hierarchical Navigable Small World)
+   • Graph-based structure
+   • Multiple layers of connections
+   • Fast search: O(log n)
+   • Used by: Pinecone, Weaviate, Qdrant
+
+   [Top Layer]     A ←→ B
+                   ↓     ↓
+   [Mid Layer]   A ←→ C ←→ B
+                 ↓   ↓   ↓
+   [Bottom]    A-C-D-E-B-F-G
+
+2. IVF (Inverted File Index)
+   • Partition space into clusters
+   • Search only relevant clusters
+   • Trade-off: speed vs accuracy
+   • Used by: FAISS, Milvus
+
+3. Product Quantization (PQ)
+   • Compress vectors for memory efficiency
+   • Split vector into subvectors
+   • Quantize each subvector
+   • 8-10x memory reduction
+
+4. LSH (Locality-Sensitive Hashing)
+   • Hash similar vectors to same buckets
+   • Probabilistic guarantees
+   • Very fast, less accurate</code></pre>
+
+    <h3>Accuracy vs Speed Trade-off</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Speed</th>
+          <th>Memory</th>
+          <th>Accuracy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Exact (brute force)</td>
+          <td>Slow</td>
+          <td>High</td>
+          <td>100%</td>
+        </tr>
+        <tr>
+          <td>HNSW</td>
+          <td>Fast</td>
+          <td>High</td>
+          <td>95-99%</td>
+        </tr>
+        <tr>
+          <td>IVF</td>
+          <td>Fast</td>
+          <td>Medium</td>
+          <td>90-95%</td>
+        </tr>
+        <tr>
+          <td>IVF + PQ</td>
+          <td>Very Fast</td>
+          <td>Low</td>
+          <td>85-90%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Chunking Strategies</h2>
+
+    <p>How to split documents into embeddable pieces:</p>
+
+    <h3>Why Chunk?</h3>
+
+    <ul>
+      <li><strong>Context Window Limits:</strong> Embedding models have max input length (512-8192 tokens)</li>
+      <li><strong>Semantic Granularity:</strong> Each chunk should contain coherent idea</li>
+      <li><strong>Retrieval Precision:</strong> Smaller chunks = more precise matches</li>
+    </ul>
+
+    <h3>Chunking Methods</h3>
+
+    <pre><code>1. Fixed-Size Chunking
+   • Split every N characters/tokens
+   • Overlap: include last M tokens from previous chunk
+
+   chunk_size = 1000 characters
+   overlap = 200 characters
+
+   Pros: Simple, predictable
+   Cons: May split mid-sentence/paragraph
+
+2. Sentence-Based Chunking
+   • Use sentence boundaries
+   • Group sentences up to max size
+
+   Pros: Preserves sentence integrity
+   Cons: Variable chunk sizes
+
+3. Paragraph-Based Chunking
+   • Split on paragraph boundaries
+   • Maintain document structure
+
+   Pros: Natural semantic units
+   Cons: Paragraphs may be too large/small
+
+4. Semantic Chunking
+   • Use embeddings to find topic boundaries
+   • Group semantically similar sentences
+
+   Pros: Highest quality
+   Cons: Computationally expensive
+
+5. Recursive Chunking (LangChain default)
+   • Try to split on: "\n\n" → "\n" → ". " → " "
+   • Maintain hierarchy
+
+   Pros: Balanced approach
+   Cons: More complex</code></pre>
+
+    <h3>Example: LangChain Text Splitter</h3>
+
+    <pre><code class="language-python">from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,         # Target chunk size
+    chunk_overlap=200,       # Overlap between chunks
+    length_function=len,     # How to measure length
+    separators=["\n\n", "\n", ". ", " ", ""]  # Split hierarchy
+)
+
+chunks = text_splitter.split_text(long_document)
+
+# Each chunk is ~1000 chars with 200 char overlap
+print(f"Created {len(chunks)} chunks")
+print(f"Chunk 1: {chunks[0][:100]}...")</code></pre>
+
+    <h3>Best Practices</h3>
+
+    <ul>
+      <li><strong>Chunk Size:</strong> 500-1500 tokens is common sweet spot</li>
+      <li><strong>Overlap:</strong> 10-20% overlap helps preserve context</li>
+      <li><strong>Metadata:</strong> Store source, page number, section for better retrieval</li>
+      <li><strong>Experiment:</strong> Test different strategies for your use case</li>
+    </ul>
+
+    <h2>Hybrid Search</h2>
+
+    <p>Combine vector search (semantic) with keyword search (lexical):</p>
+
+    <pre><code>Vector Search (Semantic):
+Query: "feline"
+Finds: "cat", "kitten", "tiger" ✅
+
+Keyword Search (Lexical - BM25):
+Query: "feline"
+Finds: only exact "feline" matches ❌
+
+Hybrid Search:
+Combines both approaches:
+1. Get top K results from vector search
+2. Get top K results from keyword search
+3. Merge with Reciprocal Rank Fusion (RRF)
+
+score = Σ 1/(k + rank_i)
+
+Benefits:
+• Best of both worlds
+• Handles rare terms, acronyms (keyword)
+• Understands semantics (vector)
+• 10-20% improvement in many cases</code></pre>
+
+    <h3>Weaviate Hybrid Search Example</h3>
+
+    <pre><code class="language-python"># Weaviate hybrid search
+result = client.query.get(
+    "Document", ["text"]
+).with_hybrid(
+    query="artificial intelligence",
+    alpha=0.5  # 0 = pure keyword, 1 = pure vector, 0.5 = balanced
+).with_limit(10).do()</code></pre>
+
+    <h2>Filtering & Metadata</h2>
+
+    <p>Combine vector search with structured filters:</p>
+
+    <pre><code class="language-python"># Pinecone filtering
+results = index.query(
+    vector=query_embedding,
+    top_k=10,
+    filter={
+        "category": {"$eq": "technology"},
+        "date": {"$gte": "2024-01-01"},
+        "author": {"$in": ["Alice", "Bob"]}
+    }
+)
+
+# Qdrant filtering
+from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+results = client.search(
+    collection_name="my_collection",
+    query_vector=query_embedding,
+    query_filter=Filter(
+        must=[
+            FieldCondition(
+                key="category",
+                match=MatchValue(value="technology")
+            )
+        ]
+    ),
+    limit=10
+)</code></pre>
+
+    <h2>Production Considerations</h2>
+
+    <h3>Performance Optimization</h3>
+
+    <ul>
+      <li><strong>Batch Operations:</strong> Upsert/query in batches (100-1000 at a time)</li>
+      <li><strong>Caching:</strong> Cache frequently accessed embeddings</li>
+      <li><strong>Index Tuning:</strong> Adjust HNSW parameters (M, efConstruction, efSearch)</li>
+      <li><strong>Quantization:</strong> Use scalar or product quantization for large datasets</li>
+      <li><strong>Sharding:</strong> Distribute across multiple nodes for scale</li>
+    </ul>
+
+    <h3>Monitoring & Evaluation</h3>
+
+    <ul>
+      <li><strong>Recall@K:</strong> % of relevant docs in top K results</li>
+      <li><strong>Precision@K:</strong> % of top K results that are relevant</li>
+      <li><strong>Latency:</strong> Query response time (p50, p95, p99)</li>
+      <li><strong>Relevance:</strong> Human evaluation, click-through rates</li>
+    </ul>
+
+    <h2>Common Use Cases</h2>
+
+    <div class="callout success">
+      <div class="callout-title">✅ Real-World Applications</div>
+      <ul>
+        <li><strong>Semantic Search:</strong> Find documents by meaning, not just keywords</li>
+        <li><strong>RAG (Retrieval-Augmented Generation):</strong> Retrieve relevant context for LLMs</li>
+        <li><strong>Recommendation Systems:</strong> Find similar products, content</li>
+        <li><strong>Question Answering:</strong> Find answers in knowledge bases</li>
+        <li><strong>Duplicate Detection:</strong> Find similar/duplicate content</li>
+        <li><strong>Clustering:</strong> Group similar documents automatically</li>
+        <li><strong>Anomaly Detection:</strong> Find outliers in embeddings space</li>
+        <li><strong>Multimodal Search:</strong> Search images with text (CLIP)</li>
+      </ul>
+    </div>
+
+    <h2>Summary</h2>
+
+    <div class="callout info">
+      <div class="callout-title">📝 Key Takeaways</div>
+      <ul>
+        <li>Embeddings convert data to dense vectors capturing semantic meaning</li>
+        <li>Modern models: text-embedding-3 (OpenAI), Sentence-Transformers (open source)</li>
+        <li>Vector databases enable efficient similarity search at scale</li>
+        <li>ANN algorithms (HNSW, IVF) provide 10-100x speedup with minimal accuracy loss</li>
+        <li>Chunking strategies: balance between size, overlap, and semantic coherence</li>
+        <li>Hybrid search combines semantic + keyword for best results</li>
+        <li>Production: batch operations, monitoring, and proper index tuning</li>
+      </ul>
+    </div>
+
+    <h2>Key Resources</h2>
+
+    <ul>
+      <li>OpenAI Embeddings Guide: https://platform.openai.com/docs/guides/embeddings</li>
+      <li>Sentence-Transformers Documentation: https://www.sbert.net/</li>
+      <li>Pinecone Learning Center: https://www.pinecone.io/learn/</li>
+      <li>Weaviate Documentation: https://weaviate.io/developers/weaviate</li>
+      <li>MTEB Leaderboard: https://huggingface.co/spaces/mteb/leaderboard</li>
+      <li>Papers: CLIP (2021), Sentence-BERT (2019), Word2Vec (2013)</li>
+    </ul>
+
+    <div class="navigation-buttons">
+      <a href={`${import.meta.env.BASE_URL}chapters/06-generative-ai`} class="btn btn-secondary">← Previous: Generative AI</a>
+      <a href={`${import.meta.env.BASE_URL}chapters/08-rag`} class="btn btn-primary">Next: RAG Systems →</a>
+    </div>
+  </article>
+</BaseLayout>
+
